@@ -47,6 +47,41 @@ INSTALLATION
       # mail_plugin_dir = /usr/lib/dovecot/modules/imap
     }
 
+CONFIGURATION
+
+    Aside from the build-configuration done in the '.config' file, you have
+    the following run-time options (shown along with the default):
+
+    plugin {
+        ##################
+        # GENERIC OPTIONS
+
+        # mail signature (used with any backend requiring a signature)
+        antispam_signature = X-DSPAM-Signature
+
+        # semicolon-separated list of Trash folders (default unset i.e. none)
+        # antispam_trash = 
+        # antispam_trash = trash;Trash;Deleted Items
+
+        # semicolon-separarted list of spam folders
+        # antispam_spam = SPAM
+
+        ###########################
+        # BACKEND SPECIFIC OPTIONS
+        #
+
+        # dspam-exec plugin:
+
+        # dspam binary
+        antispam_dspam_binary = /usr/bin/dspam
+
+        # semicolon-separated list of extra arguments to dspam
+        # (default unset i.e. none)
+        # antispam_dspam_args = 
+        # antispam_dspam_args = --user;%u  # % expansion done by dovecot
+        # antispam_dspam_args = --mode=teft
+    }
+
 AUTHORS
 
     Johannes Berg, Frank Cusack, Benedikt Boehm, Andreas Schneider
