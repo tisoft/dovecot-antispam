@@ -46,7 +46,12 @@ static int call_dspam(pool_t pool, const char *signature, bool is_spam)
 	else
 		class_arg = t_strconcat("--class=", "innocent", NULL);
 
-	pipe(pipes);		/* for dspam stderr */
+	/*
+	 * For dspam stderr; dspam seems to not always exit with a
+	 * non-zero exit code on errors so we treat it as an error
+	 * if it logged anything to stderr.
+	 */
+	pipe(pipes);
 
 	pid = fork();
 	if (pid < 0)
@@ -54,42 +59,40 @@ static int call_dspam(pool_t pool, const char *signature, bool is_spam)
 
 	if (pid) {
 		int status;
-		/* well. dspam doesn't report an error if it has an error,
-		   but instead only prints stuff to stderr. Usually, it
-		   won't print anything, so we treat it having output as
-		   an error condition */
-
 		char buf[1024];
 		int readsize;
+		bool error = FALSE;
+
 		close(pipes[1]);
 
 		do {
-			readsize = read(pipes[0], buf, 1024);
+			readsize = read(pipes[0], buf, sizeof(buf));
 			if (readsize < 0) {
 				readsize = -1;
 				if (errno == EINTR)
 					readsize = -2;
 			}
-		} while (readsize == -2);
 
-		if (readsize != 0) {
-			close(pipes[0]);
-			return -1;
-		}
+			/*
+			 * readsize > 0 means that we read a message from
+			 * dspam, -1 means we failed to read for some odd
+			 * reason
+			 */
+			if (readsize > 0 || readsize == -1)
+				error = TRUE;
+		} while (readsize == -2 || readsize > 0);
 
+		/*
+		 * Wait for dspam, should return instantly since we've
+		 * already waited above (waiting for stderr to close)
+		 */
 		waitpid(pid, &status, 0);
-		if (!WIFEXITED(status)) {
-			close(pipes[0]);
-			return -1;
-		}
-
-		readsize = read(pipes[0], buf, 1024);
-		if (readsize != 0) {
-			close(pipes[0]);
-			return -1;
-		}
+		if (!WIFEXITED(status))
+			error = TRUE;
 
 		close(pipes[0]);
+		if (error)
+			return 1;
 		return WEXITSTATUS(status);
 	} else {
 		int fd = open("/dev/null", O_RDONLY);
