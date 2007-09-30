@@ -10,7 +10,7 @@ struct strlist {
 	const char *str;
 };
 
-#ifdef BACKEND_WANT_SIGNATURE
+#ifdef BACKEND_WANTS_SIGNATURE
 /*
  * Call backend giving
  *  - pool: dovecot memory pool, will be freed afterwards

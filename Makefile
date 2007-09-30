@@ -13,7 +13,7 @@ CFLAGS += -I$(DOVECOT)/src/imap/
 
 # per-backend configuration
 ifeq ("$(BACKEND)", "dspam-exec")
-CFLAGS += -DBACKEND_WANT_SIGNATURE=1
+CFLAGS += -DBACKEND_WANTS_SIGNATURE=1
 # can take a while, check more often
 CFLAGS += -DCOPY_CHECK_INTERVAL=10
 endif

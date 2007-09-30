@@ -43,7 +43,7 @@ static char *default_spam_folders[] = {
 	NULL
 };
 static char **spam_folders = default_spam_folders;
-#ifdef BACKEND_WANT_SIGNATURE
+#ifdef BACKEND_WANTS_SIGNATURE
 static char *signature_hdr = "X-DSPAM-Signature";
 #endif
 
@@ -109,7 +109,7 @@ static int fetch_and_copy(struct client *client,
 	int ret;
 	/* MODIFIED: new variables */
 	pool_t pool = pool_alloconly_create("antispam-copy-pool", 1024);
-#ifdef BACKEND_WANT_SIGNATURE
+#ifdef BACKEND_WANTS_SIGNATURE
 	const char *signature;
 	struct strlist *siglist = NULL;
 #else
@@ -132,7 +132,7 @@ static int fetch_and_copy(struct client *client,
 			client_send_sendalive_if_needed(client);
 
 		/* MODIFIED: keep track of mail as we copy */
-#ifdef BACKEND_WANT_SIGNATURE
+#ifdef BACKEND_WANTS_SIGNATURE
 		signature = mail_get_first_header(mail, signature_hdr);
 		if (is_empty_str(signature)) {
 			ret = SIGNATURE_MISSING;
@@ -161,7 +161,7 @@ static int fetch_and_copy(struct client *client,
 		ret = -1;
 
 	/* MODIFIED: pass to backend */
-#ifdef BACKEND_WANT_SIGNATURE
+#ifdef BACKEND_WANTS_SIGNATURE
 	/* got all signatures now, pass them to backend if no errors */
 	if (ret == 0) {
 		ret = backend(pool, src_spam, siglist);
@@ -339,7 +339,7 @@ void antispam_init(void)
 	} else
 		debug("antispam: no spam folders\n");
 
-#ifdef BACKEND_WANT_SIGNATURE
+#ifdef BACKEND_WANTS_SIGNATURE
 	tmp = getenv("ANTISPAM_SIGNATURE");
 	if (tmp)
 		signature_hdr = tmp;
