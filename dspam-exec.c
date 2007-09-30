@@ -28,7 +28,7 @@
 
 static const char *dspam_binary = "/usr/bin/dspam";
 
-static bool call_dspam(pool_t pool, const char *signature, bool is_spam)
+static int call_dspam(pool_t pool, const char *signature, bool is_spam)
 {
 	pid_t pid;
 	const char *class_arg;
@@ -88,32 +88,33 @@ static bool call_dspam(pool_t pool, const char *signature, bool is_spam)
 		return WEXITSTATUS(status);
 	} else {
 		int fd = open("/dev/null", O_RDONLY);
+
 		close(0);
 		close(1);
 		close(2);
 		/* see above */
 		close(pipes[0]);
 
-		if (dup2(pipes[1], 2) != 2) {
+		if (dup2(pipes[1], 2) != 2)
 			exit(1);
-		}
-		if (dup2(pipes[1], 1) != 1) {
+		if (dup2(pipes[1], 1) != 1)
 			exit(1);
-		}
 		close(pipes[1]);
 
-		if (dup2(fd, 0) != 0) {
+		if (dup2(fd, 0) != 0)
 			exit(1);
-		}
 		close(fd);
 
 		debug("antispam: %s --source=error --stdout %s %s",
-		       dspam_binary, class_arg, sign_arg);
+		      dspam_binary, class_arg, sign_arg);
 		execl(dspam_binary, dspam_binary,
 		      "--source=error", "--stdout", class_arg,
 		      sign_arg, NULL);
-		exit(127);	/* fall through if dspam can't be found */
-		return -1;	/* never executed */
+
+		/* fall through if dspam can't be found */
+		exit(127);
+		/* not reached */
+		return -1;
 	}
 }
 

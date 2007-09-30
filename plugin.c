@@ -163,10 +163,8 @@ static int fetch_and_copy(struct client *client,
 	/* MODIFIED: pass to backend */
 #ifdef BACKEND_WANTS_SIGNATURE
 	/* got all signatures now, pass them to backend if no errors */
-	if (ret > 0) {
-		if (backend(pool, src_spam, siglist))
-			ret = BACKEND_FAILURE;
-	}
+	if (ret > 0 && !backend(pool, src_spam, siglist))
+		ret = BACKEND_FAILURE;
 #else
 #error Not implemented
 #endif
