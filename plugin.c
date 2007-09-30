@@ -1,4 +1,3 @@
-#format CPLUSPLUS
 /*
   dspam plugin for dovecot
 
