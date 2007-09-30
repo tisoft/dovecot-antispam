@@ -27,6 +27,10 @@
 #include "plugin.h"
 
 static const char *dspam_binary = "/usr/bin/dspam";
+static char **extra_args = NULL;
+static int extra_args_num = 0;
+
+#define FIXED_ARGS_NUM 6
 
 static int call_dspam(pool_t pool, const char *signature, bool is_spam)
 {
@@ -88,6 +92,12 @@ static int call_dspam(pool_t pool, const char *signature, bool is_spam)
 		return WEXITSTATUS(status);
 	} else {
 		int fd = open("/dev/null", O_RDONLY);
+		char **argv;
+		int sz = sizeof(char *) * (FIXED_ARGS_NUM + extra_args_num);
+		int i;
+
+		argv = p_malloc(pool, sz);
+		memset(argv, 0, sz);
 
 		close(0);
 		close(1);
@@ -105,12 +115,19 @@ static int call_dspam(pool_t pool, const char *signature, bool is_spam)
 			exit(1);
 		close(fd);
 
-		debug("antispam: %s --source=error --stdout %s %s",
-		      dspam_binary, class_arg, sign_arg);
-		execl(dspam_binary, dspam_binary,
-		      "--source=error", "--stdout", class_arg,
-		      sign_arg, NULL);
+		argv[0] = (char *)dspam_binary;
+		argv[1] = "--source=error";
+		argv[2] = "--stdout";
+		argv[3] = (char *)class_arg;
+		argv[4] = (char *)sign_arg;
 
+		debug("antispam: %s --source=error --stdout %s %s ...",
+		      dspam_binary, class_arg, sign_arg);
+
+		for (i = 0; i < extra_args_num; i++)
+			argv[i + 5] = (char *)extra_args[i];
+
+		execv(dspam_binary, argv);
 		/* fall through if dspam can't be found */
 		exit(127);
 		/* not reached */
@@ -136,11 +153,22 @@ bool backend(pool_t pool, bool spam, struct strlist *sigs)
 void backend_init(pool_t pool)
 {
 	char *tmp;
+	int i;
 
 	tmp = getenv("ANTISPAM_DSPAM_BINARY");
 	if (tmp) {
 		dspam_binary = tmp;
 		debug("dspam binary set to %s\n", tmp);
+	}
+
+	tmp = getenv("ANTISPAM_DSPAM_ARGS");
+	if (tmp) {
+		extra_args = p_strsplit(pool, tmp, ";");
+		extra_args_num = strarray_length(
+					(const char *const *)extra_args);
+		for (i = 0; i < extra_args_num; i++)
+			debug("antispam: dspam extra arg %s\n",
+			      extra_args[i]);
 	}
 }
 
