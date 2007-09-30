@@ -1,0 +1,52 @@
+NAME
+
+    The dovecot antispam pugin.
+
+DESCRIPTION
+
+    The dovecot antispam plugin watches a defined spam folder (defaults to
+    "SPAM"). It works together with a spam system that classifies each
+    message as it is delivered. When the message is classified as spam, it
+    shall be delivered to the spam folder, otherwise via the regular
+    filtering file the user may have (maildrop, sieve, ...). Now the user
+    has everything classified as spam in the special spam folder, everything
+    else where it should be sorted to.
+
+    This is not enough because our spam scanner needs training. We'll
+    occasionally have false positives and false negatives. Now this is the
+    point where the dovecot antispam plugin comes into play. Instead of
+    moving mail into special folders or forwarding them to special mail
+    addresses for retraining, the plugin offers two actions for the user:
+       1. moving mail out of the SPAM folder and
+       2. moving mail into the SPAM folder.
+
+    The dovecot plugin watches these actions (and additionally prohibits
+    APPENDs to the SPAM folder, more for technical reasons than others) and
+    tells the spam classifier that it made an error and needs to re-classify
+    the message (as spam/not spam depending on which way it was moved.)
+
+    The advantage of this approach is that the mail ends up in the right
+    target folder directly and needs not be touched twice.
+
+INSTALLATION
+
+    First copy the 'defconfig' file to '.config' and edit it as necessary.
+    You need to have the dovecot headers installed and possibly other things
+    depending on the backend you choose. Then simply run 'make'.
+
+    Copy the plugin antispam.so to your dovecot imap plugin directory.
+    Depending on your installation it could be /usr/lib/dovecot/modules/imap/
+    or wherever you have it configured (look for the mail_plugin_dir
+    configuration directive.)
+
+    Open your dovecot configuration file (usually /etc/dovecot/dovecot.conf)
+    and add the antispam plugin to the imap protocol section:
+
+    protocol imap {
+      mail_plugins = antispam
+      # mail_plugin_dir = /usr/lib/dovecot/modules/imap
+    }
+
+AUTHORS
+
+    Johannes Berg, Frank Cusack, Benedikt Boehm, Andreas Schneider
