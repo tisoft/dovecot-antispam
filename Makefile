@@ -28,6 +28,8 @@ CFLAGS += -DCONFIG_DEBUG -DDEBUG_SYSLOG
 objs += debug.o
 endif
 
+# dovecot version rules
+CFLAGS += -DDOVECOT_VER=$(DOVECOT_VERSION)
 
 # main make rules
 CFLAGS += -fPIC -shared -Wall

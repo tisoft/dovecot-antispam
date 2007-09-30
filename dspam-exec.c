@@ -25,6 +25,7 @@
 #include "lib.h"
 
 #include "plugin.h"
+#include "api-compat.h"
 
 static const char *dspam_binary = "/usr/bin/dspam";
 static char **extra_args = NULL;
@@ -164,7 +165,7 @@ void backend_init(pool_t pool)
 	tmp = getenv("ANTISPAM_DSPAM_ARGS");
 	if (tmp) {
 		extra_args = p_strsplit(pool, tmp, ";");
-		extra_args_num = strarray_length(
+		extra_args_num = str_array_length(
 					(const char *const *)extra_args);
 		for (i = 0; i < extra_args_num; i++)
 			debug("antispam: dspam extra arg %s\n",

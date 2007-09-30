@@ -29,12 +29,14 @@
 
 /* dovecot headers we need */
 #include "lib.h"
+#include "str.h"
 #include "client.h"
 #include "ostream.h"
 #include "imap-search.h"
 
 /* internal stuff we need */
 #include "plugin.h"
+#include "api-compat.h"
 
 static pool_t global_pool;
 static char **trash_folders = NULL;
@@ -95,9 +97,11 @@ static void client_send_sendalive_if_needed(struct client *client)
 
 /* mostly copied from cmd-copy.c (notes added where changed) */
 /* MODIFIED: prototype to include "src_spam" */
-static int fetch_and_copy(struct client *client,
+static int fetch_and_copy(struct client *client, struct mailbox *destbox,
 			  struct mailbox_transaction_context *t,
 			  struct mail_search_arg *search_args,
+			  const char **src_uidset_r,
+			  unsigned int *copy_count_r,
 			  bool src_spam)
 {
 	struct mail_search_context *search_ctx;
@@ -106,6 +110,10 @@ static int fetch_and_copy(struct client *client,
 	const char *const *keywords_list;
 	struct mail *mail;
 	unsigned int copy_count = 0;
+#if DOVECOT_VER==10100
+	struct msgset_generator_context srcset_ctx;
+	string_t *src_uidset;
+#endif
 	int ret;
 	/* MODIFIED: new variables */
 	pool_t pool = pool_alloconly_create("antispam-copy-pool", 1024);
@@ -114,6 +122,11 @@ static int fetch_and_copy(struct client *client,
 	struct strlist *siglist = NULL;
 #else
 #error Not implemented
+#endif
+
+#if DOVECOT_VER==10100
+	src_uidset = t_str_new(256);
+	msgset_generator_init(&srcset_ctx, src_uidset);
 #endif
 
 	src_trans = mailbox_transaction_begin(client->mailbox, 0);
@@ -133,8 +146,14 @@ static int fetch_and_copy(struct client *client,
 
 		/* MODIFIED: keep track of mail as we copy */
 #ifdef BACKEND_WANTS_SIGNATURE
+#if DOVECOT_VER==10000
 		signature = mail_get_first_header(mail, signature_hdr);
-		if (!signature || !signature[0]) {
+#elif DOVECOT_VER==10100
+		signature = NULL;
+		ret = mail_get_first_header(mail, signature_hdr, &signature);
+#endif
+		/* ret can only be != 1 with new dovecot 1.1 API */
+		if (ret != 1 || !signature || !signature[0]) {
 			ret = SIGNATURE_MISSING;
 			break;
 		}
@@ -144,20 +163,35 @@ static int fetch_and_copy(struct client *client,
 #error Not implemented
 #endif
 
+#if DOVECOT_VER==10000
 		keywords_list = mail_get_keywords(mail);
-		keywords = strarray_length(keywords_list) == 0 ? NULL :
+		keywords = str_array_length(keywords_list) == 0 ? NULL :
 			mailbox_keywords_create(t, keywords_list);
 		if (mailbox_copy(t, mail, mail_get_flags(mail),
 				 keywords, NULL) < 0)
 			ret = mail->expunged ? 0 : -1;
 		mailbox_keywords_free(t, &keywords);
+#elif DOVECOT_VER==10100
+		keywords_list = mail_get_keywords(mail);
+		keywords = str_array_length(keywords_list) == 0 ? NULL :
+			mailbox_keywords_create_valid(destbox, keywords_list);
+		if (mailbox_copy(t, mail, mail_get_flags(mail),
+				 keywords, NULL) < 0)
+			ret = mail->expunged ? 0 : -1;
+		mailbox_keywords_free(destbox, &keywords);
+
+		msgset_generator_next(&srcset_ctx, mail->uid);
+#endif
 	}
 	mail_free(&mail);
+#if DOVECOT_VER==10100
+        msgset_generator_finish(&srcset_ctx);
+#endif
 
 	if (mailbox_search_deinit(&search_ctx) < 0)
 		ret = -1;
 
-	if (mailbox_transaction_commit(&src_trans, 0) < 0)
+	if (mailbox_transaction_commit(&src_trans) < 0)
 		ret = -1;
 
 	/* MODIFIED: pass to backend */
@@ -169,8 +203,12 @@ static int fetch_and_copy(struct client *client,
 #error Not implemented
 #endif
 	/* MODIFIED: kill pool */
-	pool_unref(pool);
+	mempool_unref(&pool);
 
+#if DOVECOT_VER==10100
+	*src_uidset_r = str_c(src_uidset);
+	*copy_count_r = copy_count;
+#endif
 	return ret;
 }
 
@@ -183,8 +221,14 @@ static bool cmd_copy_antispam(struct client_command_context *cmd)
 	struct mailbox *destbox;
 	struct mailbox_transaction_context *t;
         struct mail_search_arg *search_arg;
-	const char *messageset, *mailbox;
-        enum mailbox_sync_flags sync_flags = 0;
+	const char *messageset, *mailbox, *src_uidset;
+	enum mailbox_sync_flags sync_flags = 0;
+	unsigned int copy_count;
+	enum imap_sync_flags imap_flags = 0;
+#if DOVECOT_VER==10100
+	uint32_t uid_validity, uid1, uid2;
+	const char *msg = NULL;
+#endif
 	int ret;
 	/* MODIFIED: added variables */
 	bool dst_spam, src_spam;
@@ -244,24 +288,49 @@ static bool cmd_copy_antispam(struct client_command_context *cmd)
 	}
 
 	t = mailbox_transaction_begin(destbox,
-				      MAILBOX_TRANSACTION_FLAG_EXTERNAL);
-	ret = fetch_and_copy(client, t, search_arg, src_spam);
+				      MAILBOX_TRANSACTION_FLAG_EXTERNAL |
+				      MAILBOX_TRANSACTION_FLAG_ASSIGN_UIDS);
+	ret = fetch_and_copy(client, destbox, t, search_arg,
+			     &src_uidset, &copy_count, src_spam);
 
 	if (ret <= 0)
 		mailbox_transaction_rollback(&t);
+#if DOVECOT_VER==10000
 	else {
-		if (mailbox_transaction_commit(&t, 0) < 0)
+		if (mailbox_transaction_commit(&t) < 0)
 			ret = -1;
 	}
+#elif DOVECOT_VER==10100
+	else if (mailbox_transaction_commit_get_uids(&t, &uid_validity,
+						     &uid1, &uid2) < 0)
+		ret = -1;
+	else if (copy_count == 0)
+		msg = "OK No messages copied.";
+	else {
+		i_assert(copy_count == uid2 - uid1 + 1);
+
+		if (uid1 == uid2) {
+			msg = t_strdup_printf("OK [COPYUID %u %s %u] "
+					      "Copy completed.",
+					      uid_validity, src_uidset, uid1);
+		} else {
+			msg = t_strdup_printf("OK [COPYUID %u %s %u:%u] "
+					      "Copy completed.",
+					      uid_validity, src_uidset,
+					      uid1, uid2);
+		}
+	}
+#endif
 
 	if (destbox != client->mailbox) {
 		sync_flags |= MAILBOX_SYNC_FLAG_FAST;
+		imap_flags |= IMAP_SYNC_FLAG_SAFE;
 		mailbox_close(&destbox);
 	}
 
 	/* MODIFIED: extended error codes */
 	if (ret > 0)
-		return cmd_sync(cmd, sync_flags, 0, "OK Copy completed.");
+		return cmd_sync(cmd, sync_flags, imap_flags, "OK Copy completed.");
 	else if (ret == 0) {
 		/* some messages were expunged, sync them */
 		return cmd_sync(cmd, 0, 0,
@@ -361,13 +430,16 @@ void antispam_init(void)
 	 * since modules are unloaded before it's called, this "COPY" string
 	 * would otherwise point to nonexisting memory.
 	 */
-	command_register(i_strdup("COPY"), cmd_copy_antispam);
-	command_register(i_strdup("UID COPY"), cmd_copy_antispam);
-	command_register(i_strdup("APPEND"), cmd_append_antispam);
+	command_register(i_strdup("COPY"), cmd_copy_antispam,
+			 COMMAND_FLAG_USES_SEQS | COMMAND_FLAG_BREAKS_SEQS);
+	command_register(i_strdup("UID COPY"), cmd_copy_antispam,
+			 COMMAND_FLAG_BREAKS_SEQS);
+	command_register(i_strdup("APPEND"), cmd_append_antispam,
+			 COMMAND_FLAG_BREAKS_SEQS);
 }
 
 void antispam_deinit(void)
 {
 	backend_exit();
-	pool_unref(global_pool);
+	mempool_unref(&global_pool);
 }

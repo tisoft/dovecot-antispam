@@ -13,7 +13,12 @@
 
 # Dovecot build directory
 # (building the plugin requires configured dovecot sources)
-DOVECOT=..
+DOVECOT=../dovecot-1.0.5
+#DOVECOT=../dovecot-1.1
+
+# Dovecot version to build against
+DOVECOT_VERSION=10000	# version 1.0
+#DOVECOT_VERSION=10100	# version 1.1
 
 # backend
 #  - dspam-exec: direct dspam training by calling dspam executable
@@ -22,4 +27,4 @@ BACKEND=dspam-exec
 
 # enable debugging to syslog or stderr
 #DEBUG=stderr
-#DEBUG=syslog
+DEBUG=syslog
