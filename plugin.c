@@ -134,7 +134,7 @@ static int fetch_and_copy(struct client *client,
 		/* MODIFIED: keep track of mail as we copy */
 #ifdef BACKEND_WANTS_SIGNATURE
 		signature = mail_get_first_header(mail, signature_hdr);
-		if (is_empty_str(signature)) {
+		if (!signature || !signature[0]) {
 			ret = SIGNATURE_MISSING;
 			break;
 		}
