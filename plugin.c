@@ -25,43 +25,53 @@
  * Install the plugin in the usual dovecot module location.
  */
 
-#include <unistd.h>
-#include <sys/wait.h>
 #include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <time.h>
-#ifdef DEBUG
-#include <syslog.h>
-#endif
 
 /* dovecot headers we need */
 #include "lib.h"
-#include "mempool.h"
-#include "str.h"
-#include "strfuncs.h"
-#include "commands.h"
-#include "imap-search.h"
-#include "lib-storage/mail-storage.h"
-#include "mail-storage.h"
 #include "client.h"
 #include "ostream.h"
+#include "imap-search.h"
 
 /* internal stuff we need */
 #include "plugin.h"
 
-static struct signature *list_add(pool_t pool, struct signature *list)
-{
-	struct signature *n;
+static pool_t global_pool;
+static char **trash_folders = NULL;
+static char *default_spam_folders[] = {
+	"SPAM",
+	NULL
+};
+static char **spam_folders = default_spam_folders;
+#ifdef BACKEND_WANT_SIGNATURE
+static char *signature_hdr = "X-DSPAM-Signature";
+#endif
 
-	n = p_malloc(pool, sizeof(struct signature));
+static struct strlist *list_add(pool_t pool, struct strlist *list)
+{
+	struct strlist *n;
+
+	n = p_malloc(pool, sizeof(struct strlist));
 	n->next = list;
-	n->sig = NULL;
+	n->str = NULL;
 
 	return n;
 }
 
+static bool mailbox_in_list(struct mail_storage *storage, struct mailbox *box,
+			    char **list)
+{
+	if (!list)
+		return FALSE;
+
+	while (*list) {
+		if (mailbox_equals(box, storage, *list))
+			return TRUE;
+		list++;
+	}
+
+	return FALSE;
+}
 
 static void client_send_sendalive_if_needed(struct client *client)
 {
@@ -79,9 +89,16 @@ static void client_send_sendalive_if_needed(struct client *client)
 	}
 }
 
+#define GENERIC_ERROR		-1
+#define SIGNATURE_MISSING	-2
+#define BACKEND_FAILURE		-3
+
+/* mostly copied from cmd-copy.c (notes added where changed) */
+/* MODIFIED: prototype to include "src_spam" */
 static int fetch_and_copy(struct client *client,
 			  struct mailbox_transaction_context *t,
-			  struct mail_search_arg *search_args)
+			  struct mail_search_arg *search_args,
+			  bool src_spam)
 {
 	struct mail_search_context *search_ctx;
         struct mailbox_transaction_context *src_trans;
@@ -90,6 +107,14 @@ static int fetch_and_copy(struct client *client,
 	struct mail *mail;
 	unsigned int copy_count = 0;
 	int ret;
+	/* MODIFIED: new variables */
+	pool_t pool = pool_alloconly_create("antispam-copy-pool", 1024);
+#ifdef BACKEND_WANT_SIGNATURE
+	const char *signature;
+	struct strlist *siglist = NULL;
+#else
+#error Not implemented
+#endif
 
 	src_trans = mailbox_transaction_begin(client->mailbox, 0);
 	search_ctx = mailbox_search_init(src_trans, NULL, search_args, NULL);
@@ -105,6 +130,19 @@ static int fetch_and_copy(struct client *client,
 
 		if ((++copy_count % COPY_CHECK_INTERVAL) == 0)
 			client_send_sendalive_if_needed(client);
+
+		/* MODIFIED: keep track of mail as we copy */
+#ifdef BACKEND_WANT_SIGNATURE
+		signature = mail_get_first_header(mail, signature_hdr);
+		if (is_empty_str(signature)) {
+			ret = SIGNATURE_MISSING;
+			break;
+		}
+		siglist = list_add(pool, siglist);
+		siglist->str = p_strdup(pool, signature);
+#else
+#error Not implemented
+#endif
 
 		keywords_list = mail_get_keywords(mail);
 		keywords = strarray_length(keywords_list) == 0 ? NULL :
@@ -122,10 +160,25 @@ static int fetch_and_copy(struct client *client,
 	if (mailbox_transaction_commit(&src_trans, 0) < 0)
 		ret = -1;
 
+	/* MODIFIED: pass to backend */
+#ifdef BACKEND_WANT_SIGNATURE
+	/* got all signatures now, pass them to backend if no errors */
+	if (ret == 0) {
+		ret = backend(pool, src_spam, siglist);
+		if (ret)
+			ret = BACKEND_FAILURE;
+	}
+#else
+#error Not implemented
+#endif
+	/* MODIFIED: kill pool */
+	pool_unref(pool);
+
 	return ret;
 }
 
 
+/* mostly copied from cmd-copy.c (notes added where changed) */
 static bool cmd_copy_antispam(struct client_command_context *cmd)
 {
 	struct client *client = cmd->client;
@@ -136,6 +189,8 @@ static bool cmd_copy_antispam(struct client_command_context *cmd)
 	const char *messageset, *mailbox;
         enum mailbox_sync_flags sync_flags = 0;
 	int ret;
+	/* MODIFIED: added variables */
+	bool dst_spam, src_spam;
 
 	/* <message set> <mailbox> */
 	if (!client_read_string_args(cmd, 2, &messageset, &mailbox))
@@ -156,9 +211,11 @@ static bool cmd_copy_antispam(struct client_command_context *cmd)
 	if (storage == NULL)
 		return TRUE;
 
-	if (mailbox_equals(client->mailbox, storage, mailbox))
+	if (mailbox_equals(client->mailbox, storage, mailbox)) {
 		destbox = client->mailbox;
-	else {
+		/* MODIFIED: don't try to reclassify on copy within folder */
+		return cmd_copy(cmd);
+	} else {
 		destbox = mailbox_open(storage, mailbox, NULL,
 				       MAILBOX_OPEN_SAVEONLY |
 				       MAILBOX_OPEN_FAST |
@@ -169,9 +226,29 @@ static bool cmd_copy_antispam(struct client_command_context *cmd)
 		}
 	}
 
+	/* MODIFIED: Trash detection */
+	if (mailbox_in_list(storage, client->mailbox, trash_folders) ||
+	    mailbox_in_list(storage, destbox, trash_folders)) {
+		mailbox_close(&destbox);
+		return cmd_copy(cmd);
+	}
+
+	/* MODIFIED: from/to-SPAM detection */
+	src_spam = mailbox_in_list(storage, client->mailbox, spam_folders);
+	dst_spam = mailbox_in_list(storage, destbox, spam_folders);
+	/*
+	 * "both spam" can happen with multiple spam folders,
+	 * "none spam" is the common case where spam folders are not involved
+	 */
+	if ((src_spam && dst_spam) ||
+	    (!src_spam && !dst_spam)) {
+		mailbox_close(&destbox);
+		return cmd_copy(cmd);
+	}
+
 	t = mailbox_transaction_begin(destbox,
 				      MAILBOX_TRANSACTION_FLAG_EXTERNAL);
-	ret = fetch_and_copy(client, t, search_arg);
+	ret = fetch_and_copy(client, t, search_arg, src_spam);
 
 	if (ret <= 0)
 		mailbox_transaction_rollback(&t);
@@ -209,17 +286,16 @@ static bool cmd_append_antispam(struct client_command_context *cmd)
 		return FALSE;
 
 	storage = client_find_storage(cmd, &mailbox);
-	if (storage == NULL)
+	if (!storage)
 		return FALSE;
-	box =
-	    mailbox_open(storage, mailbox, NULL,
-			 MAILBOX_OPEN_FAST | MAILBOX_OPEN_KEEP_RECENT);
-	if (box != NULL) {
 
-		if (mailbox_equals(box, storage, "SPAM")) {
+	box = mailbox_open(storage, mailbox, NULL,
+			   MAILBOX_OPEN_FAST | MAILBOX_OPEN_KEEP_RECENT);
+	if (box) {
+		if (mailbox_in_list(storage, box, spam_folders)) {
 			mailbox_close(&box);
 			return cmd_sync(cmd, 0, 0,
-					"NO Cannot APPEND to SPAM box, sorry.");
+					"NO Cannot APPEND to spam folder.");
 		}
 
 		mailbox_close(&box);
@@ -229,8 +305,49 @@ static bool cmd_append_antispam(struct client_command_context *cmd)
 }
 
 
-void dspam_init(void)
+void antispam_init(void)
 {
+	char *tmp, **iter;
+
+	debug("antispam plugin intialising\n");
+
+	global_pool = pool_alloconly_create("antispam-pool", 1024);
+
+	tmp = getenv("ANTISPAM_TRASH");
+	if (tmp)
+		trash_folders = p_strsplit(global_pool, tmp, ";");
+
+	if (trash_folders) {
+		iter = trash_folders;
+		while (*iter) {
+			debug("antispam: \"%s\" is trash folder\n", *iter);
+			iter++;
+		}
+	} else
+		debug("antispam: no trash folders\n");
+
+	tmp = getenv("ANTISPAM_SPAM");
+	if (tmp)
+		spam_folders = p_strsplit(global_pool, tmp, ";");
+
+	if (spam_folders) {
+		iter = spam_folders;
+		while (*iter) {
+			debug("antispam: \"%s\" is spam folder\n", *iter);
+			iter++;
+		}
+	} else
+		debug("antispam: no spam folders\n");
+
+#ifdef BACKEND_WANT_SIGNATURE
+	tmp = getenv("ANTISPAM_SIGNATURE");
+	if (tmp)
+		signature_hdr = tmp;
+	debug("antispam: signature header line is \"%s\"\n", signature_hdr);
+#endif
+
+	backend_init(global_pool);
+
 	command_unregister("COPY");
 	command_unregister("APPEND");
 	command_unregister("UID COPY");
@@ -244,6 +361,8 @@ void dspam_init(void)
 	command_register(i_strdup("APPEND"), cmd_append_antispam);
 }
 
-void dspam_deinit(void)
+void antispam_deinit(void)
 {
+	backend_exit();
+	pool_unref(global_pool);
 }

@@ -13,7 +13,7 @@ CFLAGS += -I$(DOVECOT)/src/imap/
 
 # per-backend configuration
 ifeq ("$(BACKEND)", "dspam-exec")
-CFLAGS += -DCONFIG_PLUGIN_WANT_SIGNATURE=1
+CFLAGS += -DBACKEND_WANT_SIGNATURE=1
 # can take a while, check more often
 CFLAGS += -DCOPY_CHECK_INTERVAL=10
 endif
@@ -38,8 +38,11 @@ ALL = antispam
 
 all: verify_config $(ALL)
 
+%.o:	%.c .config
+	$(CC) -c $(CFLAGS) -o $@ $<
+
 antispam: $(objs)
-	$(CC) $(CFLAGS) $(INCLUDES) $(objs) -o $@.so $(LDFLAGS)
+	$(CC) $(CFLAGS) $(objs) -o $@.so $(LDFLAGS)
 
 clean:
 	rm -f *.so *.o *~

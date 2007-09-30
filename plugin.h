@@ -2,14 +2,15 @@
 #define _ANTISPAM_PLUGIN_H
 
 #include <unistd.h>  
+#include "lib.h"
 #include "mempool.h"
 
-struct signature {
-	struct signature *next;
-	char *sig;
+struct strlist {
+	struct strlist *next;
+	const char *str;
 };
 
-#ifdef CONFIG_PLUGIN_WANT_SIGNATURE
+#ifdef BACKEND_WANT_SIGNATURE
 /*
  * Call backend giving
  *  - pool: dovecot memory pool, will be freed afterwards
@@ -17,18 +18,21 @@ struct signature {
  *  - sigs: signatures, next == NULL terminates list
  *  - 
  */
-int backend(pool_t pool, int spam, struct signature *sigs);
+bool backend(pool_t pool, bool spam, struct strlist *sigs);
 #elif CONFIG_PLUGIN_WANT_MAIL
 #error TODO: no support for pristine training yet
 #else
 #error BUILD SYSTEM ERROR
 #endif
 
+void backend_init(pool_t pool);
+void backend_exit(void);
+
 #ifdef CONFIG_DEBUG
 void debug(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 #else
-static inline void
-debug(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)))
+static void debug(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+static inline void debug(const char *fmt, ...)
 {
 }
 #endif
