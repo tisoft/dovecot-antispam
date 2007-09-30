@@ -105,7 +105,7 @@ static int fetch_and_copy(struct client *client, struct mailbox *destbox,
 			  bool src_spam)
 {
 	struct mail_search_context *search_ctx;
-        struct mailbox_transaction_context *src_trans;
+	struct mailbox_transaction_context *src_trans;
 	struct mail_keywords *keywords;
 	const char *const *keywords_list;
 	struct mail *mail;
@@ -185,7 +185,7 @@ static int fetch_and_copy(struct client *client, struct mailbox *destbox,
 	}
 	mail_free(&mail);
 #if DOVECOT_VER==10100
-        msgset_generator_finish(&srcset_ctx);
+	msgset_generator_finish(&srcset_ctx);
 #endif
 
 	if (mailbox_search_deinit(&search_ctx) < 0)
@@ -220,7 +220,7 @@ static bool cmd_copy_antispam(struct client_command_context *cmd)
 	struct mail_storage *storage;
 	struct mailbox *destbox;
 	struct mailbox_transaction_context *t;
-        struct mail_search_arg *search_arg;
+	struct mail_search_arg *search_arg;
 	const char *messageset, *mailbox, *src_uidset;
 	enum mailbox_sync_flags sync_flags = 0;
 	unsigned int copy_count;
