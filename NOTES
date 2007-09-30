@@ -1,0 +1,33 @@
+
+This file contains just some notes/thoughts on various implementation issues
+for other backends or different things.
+
+
+SQL-based logger for later training
+
+ - use dovecot's dict API
+ - configuration:
+    antispam_dict_uri = ...
+    antispam_dict_username = ...
+ - backend implementation:
+    1) dict_init(uri, username)
+    2) dict_transaction_begin
+    3) for each signature:
+       dict_atomic_inc(signature, comes_from_spam_folder ? 1 : -1)
+    4) dict_transaction_commit
+    5) dict_deinit
+ - later training implementation, to be atomic, needs to use transactions
+   to get a list of all values and delete them at the same time, or use a
+   temporary table that is copied from the original while the original is
+   emptied (again, atomically)
+
+
+Full-message availability
+
+Pristine retraining or SpamAssassin retraining might need the full message
+available. This should be implemented via a BACKEND_WANTS_MAIL configuration
+option that gives the backend access to each struct mail we iterate over in
+the copy loop so it can get the stream or whatever it needs. On the other
+hand, this is then not atomic with failures in the copy loop, so maybe we
+should call that option BACKEND_WANTS_SEARCH and create a new search context
+for it.
