@@ -163,9 +163,8 @@ static int fetch_and_copy(struct client *client,
 	/* MODIFIED: pass to backend */
 #ifdef BACKEND_WANTS_SIGNATURE
 	/* got all signatures now, pass them to backend if no errors */
-	if (ret == 0) {
-		ret = backend(pool, src_spam, siglist);
-		if (ret)
+	if (ret > 0) {
+		if (backend(pool, src_spam, siglist))
 			ret = BACKEND_FAILURE;
 	}
 #else
@@ -262,12 +261,20 @@ static bool cmd_copy_antispam(struct client_command_context *cmd)
 		mailbox_close(&destbox);
 	}
 
+	/* MODIFIED: extended error codes */
 	if (ret > 0)
 		return cmd_sync(cmd, sync_flags, 0, "OK Copy completed.");
 	else if (ret == 0) {
 		/* some messages were expunged, sync them */
 		return cmd_sync(cmd, 0, 0,
 			"NO Some of the requested messages no longer exist.");
+	} else if (ret == SIGNATURE_MISSING) {
+		return cmd_sync(cmd, 0, 0,
+			"NO Some of the requested messages have no"
+			" antispam signature.");
+	} else if (ret == BACKEND_FAILURE) {
+		return cmd_sync(cmd, 0, 0,
+			"NO Antispam backend failed to retrain.");
 	} else {
 		client_send_storage_error(cmd, storage);
 		return TRUE;
