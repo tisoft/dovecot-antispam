@@ -60,11 +60,11 @@ CONFIGURATION
         antispam_signature = X-DSPAM-Signature
 
         # semicolon-separated list of Trash folders (default unset i.e. none)
-        # antispam_trash = 
+        # antispam_trash =
         # antispam_trash = trash;Trash;Deleted Items
 
         # semicolon-separarted list of spam folders
-        # antispam_spam = SPAM
+        antispam_spam = SPAM
 
         ###########################
         # BACKEND SPECIFIC OPTIONS
@@ -77,7 +77,7 @@ CONFIGURATION
 
         # semicolon-separated list of extra arguments to dspam
         # (default unset i.e. none)
-        # antispam_dspam_args = 
+        # antispam_dspam_args =
         # antispam_dspam_args = --user;%u  # % expansion done by dovecot
         # antispam_dspam_args = --mode=teft
     }
