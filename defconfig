@@ -30,4 +30,4 @@ BACKEND=dspam-exec
 
 # enable debugging to syslog or stderr
 #DEBUG=stderr
-DEBUG=syslog
+#DEBUG=syslog
