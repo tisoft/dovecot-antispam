@@ -11,9 +11,11 @@ struct siglist {
 };
 
 void signature_init(void);
-int signature_extract(struct mailbox_transaction_context *t,
-		      struct mail *mail, struct siglist **list,
-		      bool from_spam);
+int signature_extract_to_list(struct mailbox_transaction_context *t,
+			      struct mail *mail, struct siglist **list,
+			      bool from_spam);
+const char *signature_extract(struct mailbox_transaction_context *t,
+			      struct mail *mail);
 void signature_list_free(struct siglist **list);
 
 #endif /* _ANTISPAM_SIGNATURE_H */

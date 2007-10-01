@@ -185,7 +185,7 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 			struct antispam_transaction_context *ast,
 			struct mail *mail, bool from_spam)
 {
-	return signature_extract(t, mail, &ast->siglist, from_spam);
+	return signature_extract_to_list(t, mail, &ast->siglist, from_spam);
 }
 
 void backend_init(pool_t pool)
