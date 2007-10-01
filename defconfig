@@ -28,6 +28,9 @@ DOVECOT_VERSION=1.0
 BACKEND=dspam-exec
 
 
+# install directory for 'make install'
+INSTALLDIR=/usr/lib/dovecot/modules/imap/
+
 # enable debugging to syslog or stderr
 #DEBUG=stderr
 #DEBUG=syslog

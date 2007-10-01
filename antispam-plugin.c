@@ -72,7 +72,7 @@ bool mailbox_is_trash(struct mailbox *box)
 	return mailbox_in_list(box, trash_folders);
 }
 
-void antispam_init(void)
+void antispam_plugin_init(void)
 {
 	char *tmp, **iter;
 
@@ -112,7 +112,7 @@ void antispam_init(void)
 	hook_mail_storage_created = antispam_mail_storage_created;
 }
 
-void antispam_deinit(void)
+void antispam_plugin_deinit(void)
 {
 	hook_mail_storage_created = antispam_next_hook_mail_storage_created;
 	backend_exit();
@@ -120,4 +120,4 @@ void antispam_deinit(void)
 }
 
 /* put dovecot version we built against into plugin for checking */
-const char *antispam_version = PACKAGE_VERSION;
+const char *antispam_plugin_version = PACKAGE_VERSION;

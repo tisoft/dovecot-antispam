@@ -32,12 +32,14 @@ INSTALLATION
 
     First copy the 'defconfig' file to '.config' and edit it as necessary.
     You need to have the dovecot headers installed and possibly other things
-    depending on the backend you choose. Then simply run 'make'.
+    depending on the backend you choose. Then, assuming you have configured
+    the INSTALLDIR correctly, simply run 'make install'.
 
-    Copy the plugin antispam.so to your dovecot imap plugin directory.
-    Depending on your installation it could be /usr/lib/dovecot/modules/imap/
-    or wherever you have it configured (look for the mail_plugin_dir
-    configuration directive.)
+    If you do not wish to use the install target, simply copy the plugin
+    (that is, the file lib90_antispam_plugin.so) to your dovecot imap plugin
+    directory; by default this is /usr/lib/dovecot/modules/imap/ or any dir
+    you have configured (look for the mail_plugin_dir configuration
+    directive.)
 
     Open your dovecot configuration file (usually /etc/dovecot/dovecot.conf)
     and add the antispam plugin to the imap protocol section:

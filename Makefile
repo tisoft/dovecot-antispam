@@ -39,18 +39,21 @@ CFLAGS += -fPIC -shared -Wall
 CC ?= "gcc"
 
 objs += antispam-plugin.o $(BACKEND).o
-ALL = antispam
+ALL = lib90_antispam_plugin.so
 
 all: verify_config $(ALL)
 
 %.o:	%.c .config antispam-plugin.h
 	$(CC) -c $(CFLAGS) -o $@ $<
 
-antispam: $(objs)
-	$(CC) $(CFLAGS) $(objs) -o $@.so $(LDFLAGS)
+%.so: $(objs)
+	$(CC) $(CFLAGS) $(objs) -o $@ $(LDFLAGS)
 
 clean:
 	rm -f *.so *.o *~
+
+install: all
+	install -o root -g root -m 0660 lib90_antispam_plugin.so $(INSTALLDIR)/
 
 verify_config:
 	@if [ ! -r .config ]; then \
