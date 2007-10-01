@@ -32,7 +32,7 @@ endif
 
 # backend error check
 ifeq ("$(BACKEND)", "")
-error:
+error: verify_config
 	@echo "Error! no backend configured"
 	@false
 endif
