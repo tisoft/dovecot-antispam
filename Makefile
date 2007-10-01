@@ -9,6 +9,7 @@ CFLAGS += -I$(DOVECOT)/src/lib/
 CFLAGS += -I$(DOVECOT)/src/lib-storage/
 CFLAGS += -I$(DOVECOT)/src/lib-mail/
 CFLAGS += -I$(DOVECOT)/src/lib-imap/
+CFLAGS += -I$(DOVECOT)/src/lib-dict/
 CFLAGS += -I$(DOVECOT)/src/imap/
 
 # debug rules
@@ -31,6 +32,9 @@ endif
 
 # per-backend rules
 ifeq ("$(BACKEND)", "dspam-exec")
+objs += signature.o
+endif
+ifeq ("$(BACKEND)", "signature-log")
 objs += signature.o
 endif
 

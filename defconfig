@@ -24,8 +24,10 @@ DOVECOT_VERSION=1.0
 #DOVECOT_VERSION=1.1	# CURRENTLY BROKEN
 
 # backend
-#  - dspam-exec: direct dspam training by calling dspam executable
-BACKEND=dspam-exec
+#  dspam-exec		- direct dspam training by calling dspam executable
+#  signature-log	- signature logging using dovecot's dict API
+#BACKEND=dspam-exec
+BACKEND=signature-log
 
 
 # install directory for 'make install'
