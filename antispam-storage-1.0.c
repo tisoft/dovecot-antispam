@@ -27,9 +27,21 @@ struct antispam_mail_storage {
 
 enum mailbox_move_type {
 	MMT_UNINTERESTING,
-	MMT_FROM_SPAM,
+	MMT_TO_CLEAN,
 	MMT_TO_SPAM,
 };
+
+enum classification move_to_class(enum mailbox_move_type tp)
+{
+	switch (tp) {
+	case MMT_TO_CLEAN:
+		return CLASS_NOTSPAM;
+	case MMT_TO_SPAM:
+		return CLASS_SPAM;
+	default:
+		i_assert(0);
+	}
+}
 
 struct antispam_mailbox {
 	struct mailbox_vfuncs super;
@@ -63,14 +75,21 @@ antispam_copy(struct mailbox_transaction_context *t, struct mail *mail,
 	asbox->save_hack = FALSE;
 	asbox->movetype = MMT_UNINTERESTING;
 
+	if (mailbox_is_unsure(t->box)) {
+		mail_storage_set_error(t->box->storage,
+				       "Cannot copy to unsure folder");
+		return -1;
+	}
+
 	if (!mailbox_is_trash(mail->box) &&
 	    !mailbox_is_trash(t->box)) {
 		bool src_spam = mailbox_is_spam(mail->box);
 		bool dst_spam = mailbox_is_spam(t->box);
+		bool src_unsu = mailbox_is_unsure(mail->box);
 
-		if (src_spam && !dst_spam)
-			asbox->movetype = MMT_FROM_SPAM;
-		else if (!src_spam && dst_spam)
+		if ((src_spam || src_unsu) && !dst_spam)
+			asbox->movetype = MMT_TO_CLEAN;
+		else if ((!src_spam || src_unsu) && dst_spam)
 			asbox->movetype = MMT_TO_SPAM;
 	}
 
@@ -84,7 +103,7 @@ antispam_copy(struct mailbox_transaction_context *t, struct mail *mail,
 		ret = 0;
 	else
 		ret = backend_handle_mail(t, ast, copy_dest_mail,
-					  asbox->movetype == MMT_FROM_SPAM);
+					  move_to_class(asbox->movetype));
 
 	if (copy_dest_mail != dest_mail)
 		mail_free(&copy_dest_mail);
@@ -113,7 +132,7 @@ static int antispam_save_finish(struct mail_save_context *ctx,
 	asbox->save_hack = TRUE;
 	if (asbox->movetype != MMT_UNINTERESTING)
 		ret = backend_handle_mail(ctx->transaction, ast, save_dest_mail,
-					  asbox->movetype == MMT_FROM_SPAM);
+					  move_to_class(asbox->movetype));
 	else
 		ret = 0;
 

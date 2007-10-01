@@ -44,5 +44,6 @@ void antispam_mail_storage_created(struct mail_storage *storage);
 void (*antispam_next_hook_mail_storage_created)(struct mail_storage *storage);
 bool mailbox_is_spam(struct mailbox *box);
 bool mailbox_is_trash(struct mailbox *box);
+bool mailbox_is_unsure(struct mailbox *box);
         
 #endif /* _ANTISPAM_PLUGIN_H */

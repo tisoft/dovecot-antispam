@@ -47,6 +47,7 @@ static char *default_spam_folders[] = {
 	NULL
 };
 static char **spam_folders = default_spam_folders;
+static char **unsure_folders = NULL;
 
 static bool mailbox_in_list(struct mailbox *box, char **list)
 {
@@ -70,6 +71,11 @@ bool mailbox_is_spam(struct mailbox *box)
 bool mailbox_is_trash(struct mailbox *box)
 {
 	return mailbox_in_list(box, trash_folders);
+}
+
+bool mailbox_is_unsure(struct mailbox *box)
+{
+	return mailbox_in_list(box, unsure_folders);
 }
 
 void antispam_plugin_init(void)
@@ -105,6 +111,19 @@ void antispam_plugin_init(void)
 		}
 	} else
 		debug("antispam: no spam folders\n");
+
+	tmp = getenv("ANTISPAM_UNSURE");
+	if (tmp)
+		unsure_folders = p_strsplit(global_pool, tmp, ";");
+
+	if (unsure_folders) {
+		iter = unsure_folders;
+		while (*iter) {
+			debug("antispam: \"%s\" is unsure folder\n", *iter);
+			iter++;
+		}
+	} else
+		debug("antispam: no unsure folders\n");
 
 	backend_init(global_pool);
 

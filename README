@@ -28,6 +28,12 @@ DESCRIPTION
     The advantage of this approach is that the mail ends up in the right
     target folder directly and needs not be touched twice.
 
+    When other classifiers like crm114 that have an 'unsure' state are used,
+    the plugin can also help, it supports an 'unsure' folder feature. The
+    unsure folder cannot be written to, but moving out from there into a
+    folder that is considered a spam folder will learn as spam, any other
+    folder (except trashes) will cause learning as not-spam.
+
 INSTALLATION
 
     First copy the 'defconfig' file to '.config' and edit it as necessary.
@@ -87,8 +93,11 @@ CONFIGURATION
         # antispam_trash =
         # antispam_trash = trash;Trash;Deleted Items
 
-        # semicolon-separarted list of spam folders
+        # semicolon-separated list of spam folders
         antispam_spam = SPAM
+
+        # semicolon-separated list of unsure folders (default unset i.e. none)
+        # antispam_unsure =
 
         ###########################
         # BACKEND SPECIFIC OPTIONS
