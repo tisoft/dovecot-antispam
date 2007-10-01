@@ -188,23 +188,6 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 	return signature_extract(t, mail, &ast->siglist, from_spam);
 }
 
-#if 0
-bool backend(pool_t pool, bool spam, struct strlist *sigs)
-{
-	int ret;
-
-	/* got all signatures now, walk them passing to dspam */
-	while (sigs) {
-		ret = call_dspam(pool, sigs->str, spam);
-		if (ret)
-			return FALSE;
-		sigs = sigs->next;
-	}
-
-	return TRUE;
-}
-#endif
-
 void backend_init(pool_t pool)
 {
 	char *tmp;
