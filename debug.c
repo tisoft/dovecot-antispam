@@ -10,6 +10,7 @@ static void _debug(const char *format, va_list ap)
 	vsyslog(LOG_DEBUG, format, ap);
 #elif defined(DEBUG_STDERR)
 	vfprintf(stderr, format, ap);
+	fflush(stderr);
 #else
 #error no logging method
 #endif
