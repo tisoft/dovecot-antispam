@@ -443,3 +443,6 @@ void antispam_deinit(void)
 	backend_exit();
 	mempool_unref(&global_pool);
 }
+
+/* put dovecot version we built against into plugin for checking */
+const char *antispam_version = PACKAGE_VERSION;
