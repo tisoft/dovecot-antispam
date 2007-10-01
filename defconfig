@@ -26,8 +26,10 @@ DOVECOT_VERSION=1.0
 # backend
 #  dspam-exec		- direct dspam training by calling dspam executable
 #  signature-log	- signature logging using dovecot's dict API
+#  mailtrain		- send mail to special addresses for training
 BACKEND=dspam-exec
 #BACKEND=signature-log
+#BACKEND=mailtrain
 
 
 # install directory for 'make install'

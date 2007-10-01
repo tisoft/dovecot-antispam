@@ -49,6 +49,28 @@ INSTALLATION
       # mail_plugin_dir = /usr/lib/dovecot/modules/imap
     }
 
+BACKENDS
+
+    The plugin supports multiple backends, there are currently two working
+    backends included in the distribution:
+
+    dspam executable backend (dspam specific)
+
+        This backend instantly retrains by calling dspam. There are some
+        problems with this approach including
+         (1) it can take a long time during which the IMAP session is
+             blocked
+         (2) when many users retrain many messages at once server load may
+             spike
+
+    email sender backend (spam filter agnostic)
+
+        This backend sends mail to ham@example.com or spam@example.com
+        (actual addresses are configurable) for retraining. This backend can
+        be very fast to set up if you already have a working setup that uses
+        training addresses as recommended by many spam filter setups.
+
+
 CONFIGURATION
 
     Aside from the build-configuration done in the '.config' file, you have
@@ -72,7 +94,8 @@ CONFIGURATION
         # BACKEND SPECIFIC OPTIONS
         #
 
-        # dspam-exec plugin:
+        #===================
+        # dspam-exec plugin
 
         # dspam binary
         antispam_dspam_binary = /usr/bin/dspam
@@ -82,6 +105,19 @@ CONFIGURATION
         # antispam_dspam_args =
         # antispam_dspam_args = --user;%u  # % expansion done by dovecot
         # antispam_dspam_args = --mode=teft
+
+        #=====================
+        # mail sending plugin
+
+        # temporary directory
+        antispam_mail_tmpdir = /tmp
+
+        # spam/not-spam addresses (default unset which will give errors)
+        # antispam_mail_spam =
+        # antispam_mail_ham =
+
+        # sendmail binary
+        antispam_mail_tmpdir = /usr/sbin/sendmail
     }
 
 AUTHORS
