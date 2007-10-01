@@ -76,6 +76,18 @@ BACKENDS
         be very fast to set up if you already have a working setup that uses
         training addresses as recommended by many spam filter setups.
 
+    crm114 executable backend (crm114 specific)
+
+        This backend instantly retrains by calling mailreaver.crm which
+        needs to be configured (defaulting to /bin/false!); the argument
+        --good or --spam is given depending on how mail is moved.
+
+        You need to use the unsure folder option (see below) together with
+        this plugin and deliver unsure mail into an unsure folder, spam mail
+        into a spam folder and other mail regularly.
+
+        Has the same drawbacks as the dspam-exec approach.
+
 
 CONFIGURATION
 
@@ -127,6 +139,21 @@ CONFIGURATION
 
         # sendmail binary
         antispam_mail_tmpdir = /usr/sbin/sendmail
+
+        #===================
+        # crm114-exec plugin
+
+        # mailreaver binary
+        antispam_crm_binary = /bin/false
+        # antispam_crm_binary = /usr/share/crm114/mailreaver.crm
+
+        # semicolon-separated list of extra arguments to dspam
+        # (default unset i.e. none)
+        # antispam_crm_args =
+        # antispam_crm_args = --config=/path/to/config
+
+        # NOTE: you need to set the signature for this backend
+        antispam_signature = X-CRM114-CacheID
     }
 
 AUTHORS
