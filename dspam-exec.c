@@ -35,7 +35,7 @@ static int extra_args_num = 0;
 
 #define FIXED_ARGS_NUM 6
 
-static int call_dspam(const char *signature, bool from_spam)
+static int call_dspam(const char *signature, enum classification wanted)
 {
 	pid_t pid;
 	const char *class_arg;
@@ -43,10 +43,14 @@ static int call_dspam(const char *signature, bool from_spam)
 	int pipes[2];
 
 	sign_arg = t_strconcat("--signature=", signature, NULL);
-	if (from_spam)
+	switch (wanted) {
+	case CLASS_NOTSPAM:
 		class_arg = t_strconcat("--class=", "innocent", NULL);
-	else
+		break;
+	case CLASS_SPAM:
 		class_arg = t_strconcat("--class=", "spam", NULL);
+		break;
+	}
 
 	/*
 	 * For dspam stderr; dspam seems to not always exit with a
@@ -167,7 +171,7 @@ int backend_commit(struct mailbox_transaction_context *ctx,
 	int ret = 0;
 
 	while (item) {
-		if (call_dspam(item->sig, item->from_spam)) {
+		if (call_dspam(item->sig, item->wanted)) {
 			ret = -1;
 			mail_storage_set_error(ctx->box->storage,
 					       "Failed to call dspam");
@@ -183,9 +187,9 @@ int backend_commit(struct mailbox_transaction_context *ctx,
 
 int backend_handle_mail(struct mailbox_transaction_context *t,
 			struct antispam_transaction_context *ast,
-			struct mail *mail, bool from_spam)
+			struct mail *mail, enum classification want)
 {
-	return signature_extract_to_list(t, mail, &ast->siglist, from_spam);
+	return signature_extract_to_list(t, mail, &ast->siglist, want);
 }
 
 void backend_init(pool_t pool)

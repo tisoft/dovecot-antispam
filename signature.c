@@ -16,7 +16,7 @@ void signature_init(void)
 
 int signature_extract_to_list(struct mailbox_transaction_context *t,
 			      struct mail *mail, struct siglist **list,
-			      bool from_spam)
+			      enum classification wanted)
 {
 	const char *const *signatures;
 	struct siglist *item;
@@ -33,7 +33,7 @@ int signature_extract_to_list(struct mailbox_transaction_context *t,
 
 	item = i_new(struct siglist, 1);
 	item->next = *list;
-	item->from_spam = from_spam;
+	item->wanted = wanted;
 	item->sig = i_strdup(signatures[0]);
 
 	*list = item;

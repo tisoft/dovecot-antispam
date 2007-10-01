@@ -85,10 +85,11 @@ int backend_commit(struct mailbox_transaction_context *ctx,
 
 int backend_handle_mail(struct mailbox_transaction_context *t,
 			struct antispam_transaction_context *ast,
-			struct mail *mail, bool from_spam)
+			struct mail *mail, enum classification wanted)
 {
 	const char *signature;
 	int ret;
+	int inc;
 
 	if (!ast->dict) {
 		mail_storage_set_error(t->box->storage,
@@ -97,6 +98,15 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 	}
 
 	signature = signature_extract(t, mail);
+
+	switch (wanted) {
+	case CLASS_SPAM:
+		inc = 1;
+		break;
+	case CLASS_NOTSPAM:
+		inc = -1;
+		break;
+	}
 
 	/*
 	 * We really should have a global transaction as implemented
@@ -110,7 +120,7 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 	 */
 	ast->dict_ctx = dict_transaction_begin(ast->dict);
 	signature = t_strconcat("priv/", signature, NULL);
-	dict_atomic_inc(ast->dict_ctx, signature, from_spam ? -1 : 1);
+	dict_atomic_inc(ast->dict_ctx, signature, inc);
 	ret = dict_transaction_commit(ast->dict_ctx);
 	if (ret)
 		mail_storage_set_error(t->box->storage,

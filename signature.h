@@ -4,16 +4,18 @@
 #include "lib.h"
 #include "client.h"
 
+#include "antispam-plugin.h"
+
 struct siglist {
 	struct siglist *next;
 	char *sig;
-	bool from_spam;
+	enum classification wanted;
 };
 
 void signature_init(void);
 int signature_extract_to_list(struct mailbox_transaction_context *t,
 			      struct mail *mail, struct siglist **list,
-			      bool from_spam);
+			      enum classification wanted);
 const char *signature_extract(struct mailbox_transaction_context *t,
 			      struct mail *mail);
 void signature_list_free(struct siglist **list);

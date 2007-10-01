@@ -9,18 +9,23 @@
 
 struct antispam_transaction_context;
 
-/*
- * Call backend giving
- *  - pool: dovecot memory pool, will be freed afterwards
- *  - spam: whether mail comes from spam folder or not
- *  - sigs: signatures, next == NULL terminates list
- *  - 
- */
+enum classification {
+	CLASS_NOTSPAM,
+	CLASS_SPAM,
+};
+
 void backend_init(pool_t pool);
 void backend_exit(void);
+/*
+ * Handle mail; parameters are
+ *  - t: transaction context
+ *  - ast: transaction context from backend_start()
+ *  - mail: the message
+ *  - wanted: the wanted classification determined by the user
+ */
 int backend_handle_mail(struct mailbox_transaction_context *t,
 			struct antispam_transaction_context *ast,
-			struct mail *mail, bool from_spam);
+			struct mail *mail, enum classification wanted);
 struct antispam_transaction_context *backend_start(struct mailbox *box);
 void backend_rollback(struct antispam_transaction_context *ast);
 int backend_commit(struct mailbox_transaction_context *ctx,

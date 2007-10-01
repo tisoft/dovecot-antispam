@@ -35,11 +35,20 @@ static const char *hamaddr = NULL;
 static const char *sendmail_binary = "/usr/sbin/sendmail";
 static const char *tmpdir = "/tmp";
 
-static int run_sendmail(int mailfd, bool from_spam)
+static int run_sendmail(int mailfd, enum classification wanted)
 {
-	const char *dest = from_spam ? hamaddr : spamaddr;
+	const char *dest;
 	pid_t pid;
 	int status;
+
+	switch (wanted) {
+	case CLASS_SPAM:
+		dest = spamaddr;
+		break;
+	case CLASS_NOTSPAM:
+		dest = hamaddr;
+		break;
+	}
 
 	if (!dest)
 		return -1;
@@ -96,7 +105,7 @@ static int process_tmpdir(struct mailbox_transaction_context *ctx,
 	int cnt = ast->count;
 	int fd;
 	char *buf;
-	bool from_spam;
+	enum classification wanted;
 
 	t_push();
 
@@ -108,9 +117,9 @@ static int process_tmpdir(struct mailbox_transaction_context *ctx,
 			   ast->tmpdir, cnt);
 
 		fd = open(buf, O_RDONLY);
-		read(fd, &from_spam, sizeof(bool));
+		read(fd, &wanted, sizeof(wanted));
 
-		if (run_sendmail(fd, from_spam)) {
+		if (run_sendmail(fd, wanted)) {
 			mail_storage_set_error(ctx->box->storage,
 					       "failed to send mail");
 			return -1;
@@ -174,7 +183,7 @@ int backend_commit(struct mailbox_transaction_context *ctx,
 
 int backend_handle_mail(struct mailbox_transaction_context *t,
 			struct antispam_transaction_context *ast,
-			struct mail *mail, bool from_spam)
+			struct mail *mail, enum classification wanted)
 {
 	struct istream *mailstream;
 	struct ostream *outstream;
@@ -224,8 +233,8 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 		goto out_close;
 	}
 
-	if (o_stream_send(outstream, &from_spam, sizeof(from_spam))
-			!= sizeof(from_spam)) {
+	if (o_stream_send(outstream, &wanted, sizeof(wanted))
+			!= sizeof(wanted)) {
 		ret = -1;
 		mail_storage_set_error(t->box->storage,
 				       "Failed to write marker to temp file");
