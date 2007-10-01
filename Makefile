@@ -11,14 +11,6 @@ CFLAGS += -I$(DOVECOT)/src/lib-mail/
 CFLAGS += -I$(DOVECOT)/src/lib-imap/
 CFLAGS += -I$(DOVECOT)/src/imap/
 
-# per-backend configuration
-ifeq ("$(BACKEND)", "dspam-exec")
-CFLAGS += -DBACKEND_WANTS_SIGNATURE=1
-# can take a while, check more often
-CFLAGS += -DCOPY_CHECK_INTERVAL=10
-endif
-
-
 # debug rules
 ifeq ("$(DEBUG)", "stderr")
 CFLAGS += -DCONFIG_DEBUG -DDEBUG_STDERR
@@ -29,18 +21,29 @@ objs += debug.o
 endif
 
 # dovecot version rules
-CFLAGS += -DDOVECOT_VER=$(DOVECOT_VERSION)
+objs += antispam-storage-$(DOVECOT_VERSION).o
+ifeq ("$(DOVECOT_VERSION)", "1.0")
+CFLAGS += -Dstr_array_length=strarray_length
+CFLAGS += "-Dmempool_unref(x)=pool_unref(*(x))"
+else
+CFLAGS += "-Dmempool_unref(x)=pool_unref(x)"
+endif
+
+# per-backend rules
+ifeq ("$(BACKEND)", "dspam-exec")
+objs += signature.o
+endif
 
 # main make rules
 CFLAGS += -fPIC -shared -Wall
 CC ?= "gcc"
 
-objs += plugin.o $(BACKEND).o
+objs += antispam-plugin.o $(BACKEND).o
 ALL = antispam
 
 all: verify_config $(ALL)
 
-%.o:	%.c .config
+%.o:	%.c .config antispam-plugin.h
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 antispam: $(objs)

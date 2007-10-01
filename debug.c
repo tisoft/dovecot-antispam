@@ -2,7 +2,7 @@
 #include <syslog.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include "plugin.h"
+#include "antispam-plugin.h"
 
 static void _debug(const char *format, va_list ap)
 {

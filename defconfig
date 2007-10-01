@@ -20,8 +20,8 @@ DOVECOT=../dovecot-1.0.5
 #DOVECOT=/usr/include/dovecot
 
 # Dovecot version to build against
-DOVECOT_VERSION=10000	# version 1.0
-#DOVECOT_VERSION=10100	# version 1.1
+DOVECOT_VERSION=1.0
+#DOVECOT_VERSION=1.1	# CURRENTLY BROKEN
 
 # backend
 #  - dspam-exec: direct dspam training by calling dspam executable
@@ -30,4 +30,4 @@ BACKEND=dspam-exec
 
 # enable debugging to syslog or stderr
 #DEBUG=stderr
-#DEBUG=syslog
+DEBUG=syslog

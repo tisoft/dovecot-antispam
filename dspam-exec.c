@@ -18,14 +18,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  */
 
+#include <unistd.h>
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <fcntl.h>
 
 #include "lib.h"
 
-#include "plugin.h"
-#include "api-compat.h"
+#include "antispam-plugin.h"
+#include "signature.h"
 
 static const char *dspam_binary = "/usr/bin/dspam";
 static char **extra_args = NULL;
@@ -139,6 +140,47 @@ static int call_dspam(pool_t pool, const char *signature, bool is_spam)
 	}
 }
 
+struct antispam_transaction_context {
+	struct siglist *siglist;
+};
+
+struct antispam_transaction_context *backend_start(struct mailbox *box)
+{
+	struct antispam_transaction_context *ast;
+
+	ast = i_new(struct antispam_transaction_context, 1);
+	ast->siglist = NULL;
+	return ast;
+}
+
+void backend_rollback(struct antispam_transaction_context *ast)
+{
+	signature_list_free(&ast->siglist);
+	i_free(ast);
+}
+
+int backend_commit(struct antispam_transaction_context *ast)
+{
+	struct siglist *item = ast->siglist;
+
+	while (item) {
+		debug("antispam: got signature %s\n", item->sig);
+		item = item->next;
+	}
+
+	signature_list_free(&ast->siglist);
+	i_free(ast);
+	return 0;
+}
+
+int backend_handle_mail(struct mailbox_transaction_context *t,
+			struct antispam_transaction_context *ast,
+			struct mail *mail)
+{
+	return signature_extract(t, mail, &ast->siglist);
+}
+
+#if 0
 bool backend(pool_t pool, bool spam, struct strlist *sigs)
 {
 	int ret;
@@ -153,6 +195,7 @@ bool backend(pool_t pool, bool spam, struct strlist *sigs)
 
 	return TRUE;
 }
+#endif
 
 void backend_init(pool_t pool)
 {
@@ -174,6 +217,8 @@ void backend_init(pool_t pool)
 			debug("antispam: dspam extra arg %s\n",
 			      extra_args[i]);
 	}
+
+	signature_init();
 }
 
 void backend_exit(void)
