@@ -24,6 +24,7 @@
 #include <fcntl.h>
 
 #include "lib.h"
+#include "mail-storage-private.h"
 
 #include "antispam-plugin.h"
 #include "signature.h"
@@ -34,7 +35,7 @@ static int extra_args_num = 0;
 
 #define FIXED_ARGS_NUM 6
 
-static int call_dspam(pool_t pool, const char *signature, bool is_spam)
+static int call_dspam(const char *signature, bool from_spam)
 {
 	pid_t pid;
 	const char *class_arg;
@@ -42,10 +43,10 @@ static int call_dspam(pool_t pool, const char *signature, bool is_spam)
 	int pipes[2];
 
 	sign_arg = t_strconcat("--signature=", signature, NULL);
-	if (is_spam)
-		class_arg = t_strconcat("--class=", "spam", NULL);
-	else
+	if (from_spam)
 		class_arg = t_strconcat("--class=", "innocent", NULL);
+	else
+		class_arg = t_strconcat("--class=", "spam", NULL);
 
 	/*
 	 * For dspam stderr; dspam seems to not always exit with a
@@ -101,7 +102,7 @@ static int call_dspam(pool_t pool, const char *signature, bool is_spam)
 		int sz = sizeof(char *) * (FIXED_ARGS_NUM + extra_args_num);
 		int i;
 
-		argv = p_malloc(pool, sz);
+		argv = i_malloc(sz);
 		memset(argv, 0, sz);
 
 		close(0);
@@ -159,25 +160,32 @@ void backend_rollback(struct antispam_transaction_context *ast)
 	i_free(ast);
 }
 
-int backend_commit(struct antispam_transaction_context *ast)
+int backend_commit(struct mailbox_transaction_context *ctx,
+		   struct antispam_transaction_context *ast)
 {
 	struct siglist *item = ast->siglist;
+	int ret = 0;
 
 	while (item) {
-		debug("antispam: got signature %s\n", item->sig);
+		if (call_dspam(item->sig, item->from_spam)) {
+			ret = -1;
+			mail_storage_set_error(ctx->box->storage,
+					       "Failed to call dspam");
+			break;
+		}
 		item = item->next;
 	}
 
 	signature_list_free(&ast->siglist);
 	i_free(ast);
-	return 0;
+	return ret;
 }
 
 int backend_handle_mail(struct mailbox_transaction_context *t,
 			struct antispam_transaction_context *ast,
-			struct mail *mail)
+			struct mail *mail, bool from_spam)
 {
-	return signature_extract(t, mail, &ast->siglist);
+	return signature_extract(t, mail, &ast->siglist, from_spam);
 }
 
 #if 0

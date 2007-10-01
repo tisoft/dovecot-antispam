@@ -25,8 +25,16 @@ struct antispam_mail_storage {
 	struct antispam *antispam;
 };
 
+enum mailbox_move_type {
+	MMT_UNINTERESTING,
+	MMT_FROM_SPAM,
+	MMT_TO_SPAM,
+};
+
 struct antispam_mailbox {
 	struct mailbox_vfuncs super;
+
+	enum mailbox_move_type movetype;
 
 	unsigned int save_hack:1;
 };
@@ -50,17 +58,33 @@ antispam_copy(struct mailbox_transaction_context *t, struct mail *mail,
 	else
 		copy_dest_mail = mail_alloc(t, MAIL_FETCH_PHYSICAL_SIZE, NULL);
 
+	i_assert(mail->box);
+
 	asbox->save_hack = FALSE;
+	asbox->movetype = MMT_UNINTERESTING;
+
+	if (!mailbox_is_trash(mail->box) &&
+	    !mailbox_is_trash(t->box)) {
+		bool src_spam = mailbox_is_spam(mail->box);
+		bool dst_spam = mailbox_is_spam(t->box);
+
+		if (src_spam && !dst_spam)
+			asbox->movetype = MMT_FROM_SPAM;
+		else if (!src_spam && dst_spam)
+			asbox->movetype = MMT_TO_SPAM;
+	}
+
 	if (asbox->super.copy(t, mail, flags, keywords, copy_dest_mail) < 0)
 		return -1;
 
 	/*
 	 * If copying used saving internally, we already have treated the mail
 	 */
-	if (asbox->save_hack)
+	if (asbox->save_hack || asbox->movetype == MMT_UNINTERESTING)
 		ret = 0;
 	else
-		ret = backend_handle_mail(t, ast, copy_dest_mail);
+		ret = backend_handle_mail(t, ast, copy_dest_mail,
+					  asbox->movetype == MMT_FROM_SPAM);
 
 	if (copy_dest_mail != dest_mail)
 		mail_free(&copy_dest_mail);
@@ -87,7 +111,11 @@ static int antispam_save_finish(struct mail_save_context *ctx,
 		return -1;
 
 	asbox->save_hack = TRUE;
-	ret = backend_handle_mail(ctx->transaction, ast, save_dest_mail);
+	if (asbox->movetype != MMT_UNINTERESTING)
+		ret = backend_handle_mail(ctx->transaction, ast, save_dest_mail,
+					  asbox->movetype == MMT_FROM_SPAM);
+	else
+		ret = 0;
 
 	if (save_dest_mail != dest_mail)
 		mail_free(&save_dest_mail);
@@ -102,8 +130,6 @@ antispam_transaction_begin(struct mailbox *box)
 	ast = backend_start(box);
 	i_assert(ast != NULL);
 
-	debug("antispam: transaction %p begins on %s\n", ast, box->name);
-
 	return ast;
 }
 
@@ -112,21 +138,19 @@ antispam_transaction_rollback(struct antispam_transaction_context **_ast)
 {
 	struct antispam_transaction_context *ast = *_ast;
 
-	debug("antispam: transaction %p rolled back\n", ast);
-
 	backend_rollback(ast);
 	*_ast = NULL;
 }
 
 static int
-antispam_transaction_commit(struct antispam_transaction_context **_ast)
+antispam_transaction_commit(struct mailbox_transaction_context *ctx,
+			    struct antispam_transaction_context **_ast)
 {
 	struct antispam_transaction_context *ast = *_ast;
 	int ret;
 
-	ret = backend_commit(ast);
+	ret = backend_commit(ctx, ast);
 	*_ast = NULL;
-	debug("antispam: transaction %p commit: %d\n", ast, ret);
 	return ret;
 }
 
@@ -152,7 +176,7 @@ antispam_mailbox_transaction_commit(struct mailbox_transaction_context *ctx,
 	struct antispam_mailbox *asbox = ANTISPAM_CONTEXT(ctx->box);
 	struct antispam_transaction_context *ast = ANTISPAM_CONTEXT(ctx);
 
-	if (antispam_transaction_commit(&ast) < 0) {
+	if (antispam_transaction_commit(ctx, &ast) < 0) {
 		asbox->super.transaction_rollback(ctx);
 		return -1;
 	} else

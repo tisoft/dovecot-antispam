@@ -31,8 +31,8 @@
 #include "lib.h"
 #include "str.h"
 #include "client.h"
-#include "ostream.h"
-#include "imap-search.h"
+#include "mail-storage-private.h"
+
 
 /* defined by imap, pop3, lda */
 extern void (*hook_mail_storage_created)(struct mail_storage *storage);
@@ -48,14 +48,13 @@ static char *default_spam_folders[] = {
 };
 static char **spam_folders = default_spam_folders;
 
-static bool mailbox_in_list(struct mail_storage *storage, struct mailbox *box,
-			    char **list)
+static bool mailbox_in_list(struct mailbox *box, char **list)
 {
 	if (!list)
 		return FALSE;
 
 	while (*list) {
-		if (mailbox_equals(box, storage, *list))
+		if (mailbox_equals(box, box->storage, *list))
 			return TRUE;
 		list++;
 	}
@@ -63,14 +62,14 @@ static bool mailbox_in_list(struct mail_storage *storage, struct mailbox *box,
 	return FALSE;
 }
 
-bool mailbox_is_spam(struct mail_storage *storage, struct mailbox *box)
+bool mailbox_is_spam(struct mailbox *box)
 {
-	return mailbox_in_list(storage, box, spam_folders);
+	return mailbox_in_list(box, spam_folders);
 }
 
-bool mailbox_is_trash(struct mail_storage *storage, struct mailbox *box)
+bool mailbox_is_trash(struct mailbox *box)
 {
-	return mailbox_in_list(storage, box, trash_folders);
+	return mailbox_in_list(box, trash_folders);
 }
 
 void antispam_init(void)

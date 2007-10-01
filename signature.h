@@ -7,11 +7,13 @@
 struct siglist {
 	struct siglist *next;
 	char *sig;
+	bool from_spam;
 };
 
 void signature_init(void);
 int signature_extract(struct mailbox_transaction_context *t,
-		      struct mail *mail, struct siglist **list);
+		      struct mail *mail, struct siglist **list,
+		      bool from_spam);
 void signature_list_free(struct siglist **list);
 
 #endif /* _ANTISPAM_SIGNATURE_H */

@@ -15,7 +15,8 @@ void signature_init(void)
 }
 
 int signature_extract(struct mailbox_transaction_context *t,
-		      struct mail *mail, struct siglist **list)
+		      struct mail *mail, struct siglist **list,
+		      bool from_spam)
 {
 	const char *signature;
 	struct siglist *item;
@@ -29,8 +30,11 @@ int signature_extract(struct mailbox_transaction_context *t,
 
 	item = i_new(struct siglist, 1);
 	item->next = *list;
-	*list = item;
+	item->from_spam = from_spam;
 	item->sig = i_strdup(signature);
+
+	*list = item;
+
 	return 0;
 }
 
