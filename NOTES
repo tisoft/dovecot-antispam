@@ -25,9 +25,5 @@ SQL-based logger for later training
 Full-message availability
 
 Pristine retraining or SpamAssassin retraining might need the full message
-available. This should be implemented via a BACKEND_WANTS_MAIL configuration
-option that gives the backend access to each struct mail we iterate over in
-the copy loop so it can get the stream or whatever it needs. On the other
-hand, this is then not atomic with failures in the copy loop, so maybe we
-should call that option BACKEND_WANTS_SEARCH and create a new search context
-for it.
+available. This can easily be implemented since the backend is passed each
+struct mail *mail that is moved.
