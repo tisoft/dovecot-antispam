@@ -18,20 +18,23 @@ int signature_extract(struct mailbox_transaction_context *t,
 		      struct mail *mail, struct siglist **list,
 		      bool from_spam)
 {
-	const char *signature;
+	const char *const *signatures;
 	struct siglist *item;
 
-	signature = mail_get_first_header(mail, signature_hdr);
-	if (!signature || !signature[0]) {
+	signatures = mail_get_headers(mail, signature_hdr);
+	if (!signatures || !signatures[0]) {
 		mail_storage_set_error(t->box->storage,
 				       "antispam signature not found");
 		return -1;
 	}
 
+	while (signatures[1])
+		signatures++;
+
 	item = i_new(struct siglist, 1);
 	item->next = *list;
 	item->from_spam = from_spam;
-	item->sig = i_strdup(signature);
+	item->sig = i_strdup(signatures[0]);
 
 	*list = item;
 
