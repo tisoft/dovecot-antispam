@@ -43,10 +43,10 @@ static int call_reaver(const char *signature, enum classification wanted)
 
 	switch (wanted) {
 	case CLASS_NOTSPAM:
-		class_arg = "good";
+		class_arg = "--good";
 		break;
 	case CLASS_SPAM:
-		class_arg = "spam";
+		class_arg = "--spam";
 		break;
 	}
 
@@ -54,7 +54,8 @@ static int call_reaver(const char *signature, enum classification wanted)
 	 * For reaver stdin, it wants to read a full message but
 	 * really only needs the signature.
 	 */
-	pipe(pipes);
+	if (pipe(pipes))
+		return -1;
 
 	pid = fork();
 	if (pid < 0)
@@ -97,13 +98,13 @@ static int call_reaver(const char *signature, enum classification wanted)
 		/* see above */
 		close(pipes[1]);
 
-		if (dup2(pipes[0], 0) != 2)
+		if (dup2(pipes[0], 0) != 0)
 			exit(1);
 		close(pipes[0]);
 
-		if (dup2(fd, 1) != 0)
+		if (dup2(fd, 1) != 1)
 			exit(1);
-		if (dup2(fd, 2) != 0)
+		if (dup2(fd, 2) != 2)
 			exit(1);
 		close(fd);
 
