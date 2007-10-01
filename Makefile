@@ -30,6 +30,13 @@ else
 CFLAGS += "-Dmempool_unref(x)=pool_unref(x)"
 endif
 
+# backend error check
+ifeq ("$(BACKEND)", "")
+error:
+	@echo "Error! no backend configured"
+	@false
+endif
+
 # per-backend rules
 ifeq ("$(BACKEND)", "dspam-exec")
 objs += signature.o
