@@ -4,7 +4,7 @@
 #include "signature.h"
 #include "mail-storage-private.h"
 
-static char *signature_hdr = "X-DSPAM-Signature";
+char *signature_hdr = "X-DSPAM-Signature";
 
 void signature_init(void)
 {

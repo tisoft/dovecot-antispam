@@ -34,7 +34,6 @@ static char **extra_args = NULL;
 static int extra_args_num = 0;
 
 #define FIXED_ARGS_NUM 2
-#define CRM_HDR "X-CRM114-CacheID"
 
 static int call_reaver(const char *signature, enum classification wanted)
 {
@@ -69,7 +68,7 @@ static int call_reaver(const char *signature, enum classification wanted)
 		/*
 		 * Reaver wants the mail but only needs the cache ID
 		 */
-		write(pipes[1], CRM_HDR, strlen(CRM_HDR));
+		write(pipes[1], signature_hdr, strlen(signature_hdr));
 		write(pipes[1], ": ", 2);
 		write(pipes[1], signature, strlen(signature));
 		write(pipes[1], "\r\n\r\n", 4);
