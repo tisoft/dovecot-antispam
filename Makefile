@@ -44,6 +44,9 @@ endif
 ifeq ("$(BACKEND)", "signature-log")
 objs += signature.o
 endif
+ifeq ("$(BACKEND)", "crm114-exec")
+objs += signature.o
+endif
 
 # main make rules
 CFLAGS += -fPIC -shared -Wall
