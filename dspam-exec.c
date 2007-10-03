@@ -131,8 +131,14 @@ static int call_dspam(const char *signature, enum classification wanted)
 		argv[3] = (char *)class_arg;
 		argv[4] = (char *)sign_arg;
 
+#ifdef DEBUG_SYSLOG
+		/*
+		 * not good with stderr debuggin since we then write to
+		 * stderr which our parent takes as a bug
+		 */
 		debug("antispam: %s --source=error --stdout %s %s ...",
 		      dspam_binary, class_arg, sign_arg);
+#endif
 
 		for (i = 0; i < extra_args_num; i++)
 			argv[i + 5] = (char *)extra_args[i];
