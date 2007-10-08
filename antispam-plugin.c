@@ -82,7 +82,7 @@ void antispam_plugin_init(void)
 {
 	char *tmp, **iter;
 
-	debug("antispam plugin intialising\n");
+	debug("antispam plugin initialising\n");
 
 	global_pool = pool_alloconly_create("antispam-pool", 1024);
 
