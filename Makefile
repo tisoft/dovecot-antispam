@@ -61,7 +61,7 @@ ALL = plugin
 
 all: verify_config $(ALL)
 
-%.o:	%.c .config antispam-plugin.h
+%.o:	%.c $(CONFIG) antispam-plugin.h
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 plugin: $(objs)
@@ -74,9 +74,9 @@ install: all
 	install -o root -g root -m 0660 $(LIBRARY_NAME) $(INSTALLDIR)/
 
 verify_config:
-	@if [ ! -r .config ]; then \
+	@if [ ! -r $(CONFIG) ]; then \
 		echo -e "\nBuilding the plugin requires a configuration file"; \
-		echo -e '(.config). Copy defconfig ("cp defconfig .config")' ; \
+		echo -e $(CONFIG)'. Copy defconfig ("cp defconfig' $(CONFIG)'")' ; \
 		echo -e "to create an example configuration.\n"; \
 		exit 1; \
 	fi
