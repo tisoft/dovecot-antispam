@@ -131,18 +131,18 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 
 void backend_init(pool_t pool)
 {
-	char *tmp;
+	const char *tmp;
 
-	tmp = getenv("ANTISPAM_SIGLOG_DICT_URI");
+	tmp = get_setting("SIGLOG_DICT_URI");
 	if (tmp) {
 		dict_uri = tmp;
-		debug("antispam: signature logger dict URI set to %s\n", tmp);
+		debug("signature logger dict URI set to %s\n", tmp);
 	}
 
-	tmp = getenv("ANTISPAM_SIGLOG_DICT_USER");
+	tmp = get_setting("SIGLOG_DICT_USER");
 	if (tmp) {
 		dict_user = tmp;
-		debug("antispam: signature logger dict user set to %s\n", tmp);
+		debug("signature logger dict user set to %s\n", tmp);
 	}
 
 	signature_init();

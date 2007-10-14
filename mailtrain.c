@@ -272,30 +272,30 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 
 void backend_init(pool_t pool)
 {
-	char *tmp;
+	const char *tmp;
 
-	tmp = getenv("ANTISPAM_MAIL_SPAM");
+	tmp = get_setting("MAIL_SPAM");
 	if (tmp) {
 		spamaddr = tmp;
-		debug("antispam: mail backend spam address %s\n", tmp);
+		debug("mail backend spam address %s\n", tmp);
 	}
 
-	tmp = getenv("ANTISPAM_MAIL_NOTSPAM");
+	tmp = get_setting("MAIL_NOTSPAM");
 	if (tmp) {
 		hamaddr = tmp;
-		debug("antispam: mail backend not-spam address %s\n", tmp);
+		debug("mail backend not-spam address %s\n", tmp);
 	}
 
-	tmp = getenv("ANTISPAM_MAIL_SENDMAIL");
+	tmp = get_setting("MAIL_SENDMAIL");
 	if (tmp) {
 		sendmail_binary = tmp;
-		debug("antispam: mail backend sendmail %s\n", tmp);
+		debug("mail backend sendmail %s\n", tmp);
 	}
 
-	tmp = getenv("ANTISPAM_MAIL_TMPDIR");
+	tmp = get_setting("MAIL_TMPDIR");
 	if (tmp)
 		tmpdir = tmp;
-	debug("antispam: mail backend tmpdir %s\n", tmpdir);
+	debug("mail backend tmpdir %s\n", tmpdir);
 }
 
 void backend_exit(void)

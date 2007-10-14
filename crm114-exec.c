@@ -111,7 +111,7 @@ static int call_reaver(const char *signature, enum classification wanted)
 		argv[0] = (char *)reaver_binary;
 		argv[1] = (char *)class_arg;
 
-		debug("antispam: %s %s ...", reaver_binary, class_arg);
+		debug("%s %s ...", reaver_binary, class_arg);
 
 		for (i = 0; i < extra_args_num; i++)
 			argv[i + FIXED_ARGS_NUM] = (char *)extra_args[i];
@@ -173,22 +173,22 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 
 void backend_init(pool_t pool)
 {
-	char *tmp;
+	const char *tmp;
 	int i;
 
-	tmp = getenv("ANTISPAM_CRM_BINARY");
+	tmp = get_setting("CRM_BINARY");
 	if (tmp) {
 		reaver_binary = tmp;
-		debug("antispam: reaver binary set to %s\n", tmp);
+		debug("reaver binary set to %s\n", tmp);
 	}
 
-	tmp = getenv("ANTISPAM_CRM_ARGS");
+	tmp = get_setting("CRM_ARGS");
 	if (tmp) {
 		extra_args = p_strsplit(pool, tmp, ";");
 		extra_args_num = str_array_length(
 					(const char *const *)extra_args);
 		for (i = 0; i < extra_args_num; i++)
-			debug("antispam: reaver extra arg %s\n",
+			debug("reaver extra arg %s\n",
 			      extra_args[i]);
 	}
 

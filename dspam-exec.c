@@ -136,7 +136,7 @@ static int call_dspam(const char *signature, enum classification wanted)
 		 * not good with stderr debuggin since we then write to
 		 * stderr which our parent takes as a bug
 		 */
-		debug("antispam: %s --source=error --stdout %s %s ...",
+		debug("%s --source=error --stdout %s %s ...",
 		      dspam_binary, class_arg, sign_arg);
 #endif
 
@@ -200,21 +200,21 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 
 void backend_init(pool_t pool)
 {
-	char *tmp;
+	const char *tmp;
 	int i;
 
-	tmp = getenv("ANTISPAM_DSPAM_BINARY");
+	tmp = get_setting("DSPAM_BINARY");
 	if (tmp)
 		dspam_binary = tmp;
-	debug("antispam: dspam binary set to %s\n", dspam_binary);
+	debug("dspam binary set to %s\n", dspam_binary);
 
-	tmp = getenv("ANTISPAM_DSPAM_ARGS");
+	tmp = get_setting("DSPAM_ARGS");
 	if (tmp) {
 		extra_args = p_strsplit(pool, tmp, ";");
 		extra_args_num = str_array_length(
 					(const char *const *)extra_args);
 		for (i = 0; i < extra_args_num; i++)
-			debug("antispam: dspam extra arg %s\n",
+			debug("dspam extra arg %s\n",
 			      extra_args[i]);
 	}
 

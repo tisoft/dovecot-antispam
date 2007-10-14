@@ -7,6 +7,10 @@
 #include "ostream.h"
 #include "imap-search.h"
 
+#define __stringify_1(x)	#x
+#define stringify(x)		__stringify_1(x)
+
+
 struct antispam_transaction_context;
 
 enum classification {
@@ -45,5 +49,6 @@ void (*antispam_next_hook_mail_storage_created)(struct mail_storage *storage);
 bool mailbox_is_spam(struct mailbox *box);
 bool mailbox_is_trash(struct mailbox *box);
 bool mailbox_is_unsure(struct mailbox *box);
+const char *get_setting(const char *name);
         
 #endif /* _ANTISPAM_PLUGIN_H */

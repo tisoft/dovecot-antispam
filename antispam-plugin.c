@@ -78,6 +78,21 @@ bool mailbox_is_unsure(struct mailbox *box)
 	return mailbox_in_list(box, unsure_folders);
 }
 
+const char *get_setting(const char *name)
+{
+	const char *env;
+
+	t_push();
+	env = t_strconcat(t_str_ucase(stringify(PLUGINNAME)),
+			  "_",
+			  name,
+			  NULL);
+	env = getenv(env);
+	t_pop();
+
+	return env;
+}
+
 #define __PLUGIN_FUNCTION(name, ioe) \
 	name ## _plugin_ ## ioe
 #define _PLUGIN_FUNCTION(name, ioe) \
@@ -87,50 +102,51 @@ bool mailbox_is_unsure(struct mailbox *box)
 
 void PLUGIN_FUNCTION(init)(void)
 {
-	char *tmp, **iter;
+	const char *tmp;
+	char * const *iter;
 
 	debug("antispam plugin initialising\n");
 
 	global_pool = pool_alloconly_create("antispam-pool", 1024);
 
-	tmp = getenv("ANTISPAM_TRASH");
+	tmp = get_setting("TRASH");
 	if (tmp)
 		trash_folders = p_strsplit(global_pool, tmp, ";");
 
 	if (trash_folders) {
 		iter = trash_folders;
 		while (*iter) {
-			debug("antispam: \"%s\" is trash folder\n", *iter);
+			debug("\"%s\" is trash folder\n", *iter);
 			iter++;
 		}
 	} else
-		debug("antispam: no trash folders\n");
+		debug("no trash folders\n");
 
-	tmp = getenv("ANTISPAM_SPAM");
+	tmp = get_setting("SPAM");
 	if (tmp)
 		spam_folders = p_strsplit(global_pool, tmp, ";");
 
 	if (spam_folders) {
 		iter = spam_folders;
 		while (*iter) {
-			debug("antispam: \"%s\" is spam folder\n", *iter);
+			debug("\"%s\" is spam folder\n", *iter);
 			iter++;
 		}
 	} else
-		debug("antispam: no spam folders\n");
+		debug("no spam folders\n");
 
-	tmp = getenv("ANTISPAM_UNSURE");
+	tmp = get_setting("UNSURE");
 	if (tmp)
 		unsure_folders = p_strsplit(global_pool, tmp, ";");
 
 	if (unsure_folders) {
 		iter = unsure_folders;
 		while (*iter) {
-			debug("antispam: \"%s\" is unsure folder\n", *iter);
+			debug("\"%s\" is unsure folder\n", *iter);
 			iter++;
 		}
 	} else
-		debug("antispam: no unsure folders\n");
+		debug("no unsure folders\n");
 
 	backend_init(global_pool);
 

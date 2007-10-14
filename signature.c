@@ -4,14 +4,14 @@
 #include "signature.h"
 #include "mail-storage-private.h"
 
-char *signature_hdr = "X-DSPAM-Signature";
+const char *signature_hdr = "X-DSPAM-Signature";
 
 void signature_init(void)
 {
-	char *tmp = getenv("ANTISPAM_SIGNATURE");
+	const char *tmp = get_setting("SIGNATURE");
 	if (tmp)
 		signature_hdr = tmp;
-	debug("antispam: signature header line is \"%s\"\n", signature_hdr);
+	debug("signature header line is \"%s\"\n", signature_hdr);
 }
 
 int signature_extract_to_list(struct mailbox_transaction_context *t,

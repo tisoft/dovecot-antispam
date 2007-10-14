@@ -20,6 +20,6 @@ const char *signature_extract(struct mailbox_transaction_context *t,
 			      struct mail *mail);
 void signature_list_free(struct siglist **list);
 
-extern char *signature_hdr;
+extern const char *signature_hdr;
 
 #endif /* _ANTISPAM_SIGNATURE_H */
