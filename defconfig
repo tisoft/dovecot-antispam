@@ -40,3 +40,8 @@ INSTALLDIR=/usr/lib/dovecot/modules/imap/
 # enable debugging to syslog or stderr
 #DEBUG=stderr
 #DEBUG=syslog
+
+# plugin name, change only if you need to rename the plugin
+# (because, for example, you need two instances for different
+# spam filters installed)
+PLUGINNAME=antispam

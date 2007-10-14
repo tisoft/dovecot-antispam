@@ -1,5 +1,6 @@
 # include config file
--include .config
+CONFIG ?= .config
+-include $(CONFIG)
 
 # includes/flags we need for building a dovecot plugin
 CFLAGS += -DHAVE_CONFIG_H
@@ -13,7 +14,7 @@ CFLAGS += -I$(DOVECOT)/src/lib-dict/
 CFLAGS += -I$(DOVECOT)/src/imap/
 
 # output name
-PLUGIN_NAME ?= lib90_antispam_plugin.so
+LIBRARY_NAME ?= lib90_$(PLUGINNAME)_plugin.so
 
 # debug rules
 ifeq ("$(DEBUG)", "stderr")
@@ -52,7 +53,7 @@ objs += signature.o
 endif
 
 # main make rules
-CFLAGS += -fPIC -shared -Wall
+CFLAGS += -fPIC -shared -Wall -DPLUGINNAME=$(PLUGINNAME)
 CC ?= "gcc"
 
 objs += antispam-plugin.o $(BACKEND).o
@@ -64,13 +65,13 @@ all: verify_config $(ALL)
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 plugin: $(objs)
-	$(CC) $(CFLAGS) $(objs) -o $(PLUGIN_NAME) $(LDFLAGS)
+	$(CC) $(CFLAGS) $(objs) -o $(LIBRARY_NAME) $(LDFLAGS)
 
 clean:
-	rm -f $(PLUGIN_NAME) *.o *~
+	rm -f $(LIBRARY_NAME) *.o *~
 
 install: all
-	install -o root -g root -m 0660 $(PLUGIN_NAME) $(INSTALLDIR)/
+	install -o root -g root -m 0660 $(LIBRARY_NAME) $(INSTALLDIR)/
 
 verify_config:
 	@if [ ! -r .config ]; then \

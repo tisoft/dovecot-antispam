@@ -78,7 +78,14 @@ bool mailbox_is_unsure(struct mailbox *box)
 	return mailbox_in_list(box, unsure_folders);
 }
 
-void antispam_plugin_init(void)
+#define __PLUGIN_FUNCTION(name, ioe) \
+	name ## _plugin_ ## ioe
+#define _PLUGIN_FUNCTION(name, ioe) \
+	__PLUGIN_FUNCTION(name, ioe)
+#define PLUGIN_FUNCTION(ioe)	\
+	_PLUGIN_FUNCTION(PLUGINNAME, ioe)
+
+void PLUGIN_FUNCTION(init)(void)
 {
 	char *tmp, **iter;
 
@@ -131,7 +138,7 @@ void antispam_plugin_init(void)
 	hook_mail_storage_created = antispam_mail_storage_created;
 }
 
-void antispam_plugin_deinit(void)
+void PLUGIN_FUNCTION(deinit)(void)
 {
 	hook_mail_storage_created = antispam_next_hook_mail_storage_created;
 	backend_exit();
@@ -139,4 +146,4 @@ void antispam_plugin_deinit(void)
 }
 
 /* put dovecot version we built against into plugin for checking */
-const char *antispam_plugin_version = PACKAGE_VERSION;
+const char *PLUGIN_FUNCTION(version) = PACKAGE_VERSION;
