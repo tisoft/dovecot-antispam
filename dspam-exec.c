@@ -206,7 +206,7 @@ void backend_init(pool_t pool)
 	tmp = getenv("ANTISPAM_DSPAM_BINARY");
 	if (tmp)
 		dspam_binary = tmp;
-	debug("antispam: dspam binary set to %s\n", tmp);
+	debug("antispam: dspam binary set to %s\n", dspam_binary);
 
 	tmp = getenv("ANTISPAM_DSPAM_ARGS");
 	if (tmp) {
