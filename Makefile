@@ -68,7 +68,7 @@ plugin: $(objs)
 	$(CC) $(CFLAGS) $(objs) -o $(LIBRARY_NAME) $(LDFLAGS)
 
 clean:
-	rm -f $(LIBRARY_NAME) *.o *~
+	rm -f *.so *.o *~
 
 install: all
 	install -o root -g root -m 0660 $(LIBRARY_NAME) $(INSTALLDIR)/
