@@ -105,7 +105,7 @@ void PLUGIN_FUNCTION(init)(void)
 	const char *tmp;
 	char * const *iter;
 
-	debug("antispam plugin initialising\n");
+	debug("plugin initialising\n");
 
 	global_pool = pool_alloconly_create("antispam-pool", 1024);
 
