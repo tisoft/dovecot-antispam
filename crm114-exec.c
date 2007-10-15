@@ -128,7 +128,8 @@ struct antispam_transaction_context {
 	struct siglist *siglist;
 };
 
-struct antispam_transaction_context *backend_start(struct mailbox *box)
+struct antispam_transaction_context *
+backend_start(struct mailbox *box __attr_unused__)
 {
 	struct antispam_transaction_context *ast;
 

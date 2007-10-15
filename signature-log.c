@@ -44,7 +44,8 @@ struct antispam_transaction_context {
 	struct dict_transaction_context *dict_ctx;
 };
 
-struct antispam_transaction_context *backend_start(struct mailbox *box)
+struct antispam_transaction_context *
+backend_start(struct mailbox *box __attr_unused__)
 {
 	struct antispam_transaction_context *ast;
 
@@ -68,7 +69,7 @@ void backend_rollback(struct antispam_transaction_context *ast)
 	i_free(ast);
 }
 
-int backend_commit(struct mailbox_transaction_context *ctx,
+int backend_commit(struct mailbox_transaction_context *ctx __attr_unused__,
 		   struct antispam_transaction_context *ast)
 {
 	int ret = 0;
@@ -129,7 +130,7 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 	return ret;
 }
 
-void backend_init(pool_t pool)
+void backend_init(pool_t pool __attr_unused__)
 {
 	const char *tmp;
 

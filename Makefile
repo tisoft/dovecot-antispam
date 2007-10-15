@@ -53,7 +53,7 @@ objs += signature.o
 endif
 
 # main make rules
-CFLAGS += -fPIC -shared -Wall -DPLUGINNAME=$(PLUGINNAME)
+CFLAGS += -fPIC -shared -Wall -Wextra -DPLUGINNAME=$(PLUGINNAME)
 CC ?= "gcc"
 
 objs += antispam-plugin.o $(BACKEND).o

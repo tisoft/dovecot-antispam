@@ -79,7 +79,8 @@ struct antispam_transaction_context {
 	int tmplen;
 };
 
-struct antispam_transaction_context *backend_start(struct mailbox *box)
+struct antispam_transaction_context *
+backend_start(struct mailbox *box __attr_unused__)
 {
 	struct antispam_transaction_context *ast;
 	char *tmp;
@@ -270,7 +271,7 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 	return ret;
 }
 
-void backend_init(pool_t pool)
+void backend_init(pool_t pool __attr_unused__)
 {
 	const char *tmp;
 
