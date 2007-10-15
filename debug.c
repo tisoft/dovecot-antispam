@@ -6,7 +6,7 @@
 
 static void _debug(const char *format, va_list ap)
 {
-	char *fmt;
+	const char *fmt;
 
 	t_push();
 
