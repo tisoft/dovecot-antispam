@@ -110,6 +110,22 @@ antispam_copy(struct mailbox_transaction_context *t, struct mail *mail,
 	return ret;
 }
 
+static int antispam_save_init(struct mailbox_transaction_context *t,
+			      enum mail_flags flags,
+			      struct mail_keywords *keywords,
+			      time_t received_date, int timezone_offset,
+			      const char *from_envelope, struct istream *input,
+			      bool want_mail __attr_unused__,
+			      struct mail_save_context **ctx_r)
+{
+	struct antispam_mailbox *asbox = ANTISPAM_CONTEXT(t->box);
+
+	/* note that we set want_mail = TRUE in here. */
+	return asbox->super.save_init(t, flags, keywords, received_date,
+				      timezone_offset, from_envelope,
+				      input, TRUE, ctx_r);
+}
+
 static int antispam_save_finish(struct mail_save_context *ctx,
 				struct mail *dest_mail)
 {
@@ -228,6 +244,8 @@ static struct mailbox *antispam_mailbox_open(struct mail_storage *storage,
 	asbox = p_new(box->pool, struct antispam_mailbox, 1);
 	asbox->super = box->v;
 
+	/* override save_init to override want_mail, we need that */
+	box->v.save_init = antispam_save_init;
 	box->v.save_finish = antispam_save_finish;
 	box->v.transaction_begin = antispam_mailbox_transaction_begin;
 	box->v.transaction_commit = antispam_mailbox_transaction_commit;
