@@ -7,4 +7,4 @@ Full-message availability
 
 Pristine retraining or SpamAssassin retraining might need the full message
 available. This can easily be implemented since the backend is passed each
-struct mail *mail that is moved.
+struct mail *mail that is moved. For an example see the mailtrain backend.
