@@ -33,7 +33,7 @@ static const char *dspam_binary = "/usr/bin/dspam";
 static char **extra_args = NULL;
 static int extra_args_num = 0;
 
-#define FIXED_ARGS_NUM 6
+#define FIXED_ARGS_NUM 5
 
 static int call_dspam(const char *signature, enum classification wanted)
 {
@@ -127,9 +127,8 @@ static int call_dspam(const char *signature, enum classification wanted)
 
 		argv[0] = (char *)dspam_binary;
 		argv[1] = "--source=error";
-		argv[2] = "--stdout";
-		argv[3] = (char *)class_arg;
-		argv[4] = (char *)sign_arg;
+		argv[2] = (char *)class_arg;
+		argv[3] = (char *)sign_arg;
 
 #ifdef DEBUG_SYSLOG
 		/*
@@ -141,7 +140,7 @@ static int call_dspam(const char *signature, enum classification wanted)
 #endif
 
 		for (i = 0; i < extra_args_num; i++)
-			argv[i + 5] = (char *)extra_args[i];
+			argv[i + 4] = (char *)extra_args[i];
 
 		execv(dspam_binary, argv);
 		/* fall through if dspam can't be found */
