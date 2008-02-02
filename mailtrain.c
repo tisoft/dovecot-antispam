@@ -34,6 +34,8 @@ static const char *spamaddr = NULL;
 static const char *hamaddr = NULL;
 static const char *sendmail_binary = "/usr/sbin/sendmail";
 static const char *tmpdir = "/tmp";
+static char **extra_args = NULL;
+static int extra_args_num = 0;
 
 static int run_sendmail(int mailfd, enum classification wanted)
 {
@@ -55,21 +57,37 @@ static int run_sendmail(int mailfd, enum classification wanted)
 
 	pid = fork();
 
-	switch (pid) {
-	case -1:
+	if (pid == -1)
 		return -1;
-	case 0:
-		dup2(mailfd, 0);
-		close(1);
-		close(2);
-		execl(sendmail_binary, sendmail_binary, dest, NULL);
-		_exit(1);
-	default:
+
+	if (pid) {
 		if (waitpid(pid, &status, 0) == -1)
 			return -1;
 		if (!WIFEXITED(status))
 			return -1;
 		return WEXITSTATUS(status);
+	} else {
+		char **argv;
+		int sz = sizeof(char *) * (2 + extra_args_num + 1);
+		int i;
+
+		argv = i_malloc(sz);
+		memset(argv, 0, sz);
+
+		argv[0] = (char *) sendmail_binary;
+
+		for (i = 0; i < extra_args_num; i++)
+			argv[i + 1] = (char *) extra_args[i];
+
+		argv[i + 1] = (char *) dest;
+
+		dup2(mailfd, 0);
+		close(1);
+		close(2);
+		execv(sendmail_binary, argv);
+		_exit(1);
+		/* not reached */
+		return -1;
 	}
 }
 
@@ -274,6 +292,7 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 void backend_init(pool_t pool __attr_unused__)
 {
 	const char *tmp;
+	int i;
 
 	tmp = get_setting("MAIL_SPAM");
 	if (tmp) {
@@ -291,6 +310,16 @@ void backend_init(pool_t pool __attr_unused__)
 	if (tmp) {
 		sendmail_binary = tmp;
 		debug("mail backend sendmail %s\n", tmp);
+	}
+
+	tmp = get_setting("MAIL_SENDMAIL_ARGS");
+	if (tmp) {
+		extra_args = p_strsplit(pool, tmp, ";");
+		extra_args_num = str_array_length(
+					(const char *const *)extra_args);
+		for (i = 0; i < extra_args_num; i++)
+			debug("mail backend sendmail arg %s\n",
+			      extra_args[i]);
 	}
 
 	tmp = get_setting("MAIL_TMPDIR");
