@@ -135,7 +135,7 @@ static int call_dspam(const char *signature, enum classification wanted)
 		 * not good with stderr debuggin since we then write to
 		 * stderr which our parent takes as a bug
 		 */
-		debug("%s --source=error --stdout %s %s ...",
+		debug("%s --source=error %s %s ...",
 		      dspam_binary, class_arg, sign_arg);
 #endif
 
