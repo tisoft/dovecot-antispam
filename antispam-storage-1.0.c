@@ -26,6 +26,7 @@ struct antispam_mail_storage {
 };
 
 enum mailbox_move_type {
+	MMT_APPEND,
 	MMT_UNINTERESTING,
 	MMT_TO_CLEAN,
 	MMT_TO_SPAM,
@@ -116,7 +117,7 @@ antispam_copy(struct mailbox_transaction_context *t, struct mail *mail,
 	 * however is tested within the save_finish() function and a subsequent
 	 * save to the mailbox should not invoke the backend.
 	 */
-	asbox->movetype = MMT_UNINTERESTING;
+	asbox->movetype = MMT_APPEND;
 
 	if (copy_dest_mail != dest_mail)
 		mail_free(&copy_dest_mail);
@@ -158,11 +159,25 @@ static int antispam_save_finish(struct mail_save_context *ctx,
 		return -1;
 
 	asbox->save_hack = TRUE;
-	if (asbox->movetype != MMT_UNINTERESTING)
+
+	ret = 0;
+
+	switch (asbox->movetype) {
+	case MMT_UNINTERESTING:
+		break;
+	case MMT_APPEND:
+		/* Disallow APPENDs to SPAM/UNSURE folders. */
+		if (mailbox_is_spam(save_dest_mail->box) ||
+		    mailbox_is_unsure(save_dest_mail->box)) {
+			ret = -1;
+			mail_storage_set_error(save_dest_mail->box->storage,
+					"Cannot APPEND to this folder.");
+		}
+		break;
+	default:
 		ret = backend_handle_mail(ctx->transaction, ast, save_dest_mail,
 					  move_to_class(asbox->movetype));
-	else
-		ret = 0;
+	}
 
 	if (save_dest_mail != dest_mail)
 		mail_free(&save_dest_mail);
@@ -256,7 +271,7 @@ static struct mailbox *antispam_mailbox_open(struct mail_storage *storage,
 	asbox = p_new(box->pool, struct antispam_mailbox, 1);
 	asbox->super = box->v;
 	asbox->save_hack = FALSE;
-	asbox->movetype = MMT_UNINTERESTING;
+	asbox->movetype = MMT_APPEND;
 
 	/* override save_init to override want_mail, we need that */
 	box->v.save_init = antispam_save_init;
