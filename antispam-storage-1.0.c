@@ -48,6 +48,7 @@ struct antispam_mailbox {
 
 	enum mailbox_move_type movetype;
 
+	/* used to check if copy was implemented with save */
 	unsigned int save_hack:1;
 };
 
@@ -104,6 +105,18 @@ antispam_copy(struct mailbox_transaction_context *t, struct mail *mail,
 	else
 		ret = backend_handle_mail(t, ast, copy_dest_mail,
 					  move_to_class(asbox->movetype));
+
+	/*
+	 * Both save_hack and movetype are only valid within a copy operation,
+	 * i.e. they are now invalid. Because, in theory, another operation
+	 * could be done after mailbox_open(), we need to reset the movetype
+	 * variable here. save_hack doesn't need to be reset because it is
+	 * only ever set within the save function and tested within this copy
+	 * function after being reset at the beginning of the copy, movetype
+	 * however is tested within the save_finish() function and a subsequent
+	 * save to the mailbox should not invoke the backend.
+	 */
+	asbox->movetype = MMT_UNINTERESTING;
 
 	if (copy_dest_mail != dest_mail)
 		mail_free(&copy_dest_mail);
@@ -242,6 +255,8 @@ static struct mailbox *antispam_mailbox_open(struct mail_storage *storage,
 
 	asbox = p_new(box->pool, struct antispam_mailbox, 1);
 	asbox->super = box->v;
+	asbox->save_hack = FALSE;
+	asbox->movetype = MMT_UNINTERESTING;
 
 	/* override save_init to override want_mail, we need that */
 	box->v.save_init = antispam_save_init;
