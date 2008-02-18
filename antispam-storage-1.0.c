@@ -115,15 +115,14 @@ static int antispam_save_init(struct mailbox_transaction_context *t,
 			      struct mail_keywords *keywords,
 			      time_t received_date, int timezone_offset,
 			      const char *from_envelope, struct istream *input,
-			      bool want_mail __attr_unused__,
-			      struct mail_save_context **ctx_r)
+			      bool want_mail, struct mail_save_context **ctx_r)
 {
 	struct antispam_mailbox *asbox = ANTISPAM_CONTEXT(t->box);
 
-	/* note that we set want_mail = TRUE in here. */
+	want_mail = TRUE;
 	return asbox->super.save_init(t, flags, keywords, received_date,
 				      timezone_offset, from_envelope,
-				      input, TRUE, ctx_r);
+				      input, want_mail, ctx_r);
 }
 
 static int antispam_save_finish(struct mail_save_context *ctx,
