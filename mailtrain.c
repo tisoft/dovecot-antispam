@@ -125,6 +125,7 @@ static int process_tmpdir(struct mailbox_transaction_context *ctx,
 	int fd;
 	char *buf;
 	enum classification wanted;
+	int rc = 0;
 
 	t_push();
 
@@ -141,13 +142,15 @@ static int process_tmpdir(struct mailbox_transaction_context *ctx,
 		if (run_sendmail(fd, wanted)) {
 			mail_storage_set_error(ctx->box->storage,
 					       "failed to send mail");
-			return -1;
+			debug("run program failed with exit code %d\n", rc);
+			rc = -1;
+			break;
 		}
 	}
 
 	t_pop();
 
-	return 0;
+	return rc;
 }
 
 static void clear_tmpdir(struct antispam_transaction_context *ast)
