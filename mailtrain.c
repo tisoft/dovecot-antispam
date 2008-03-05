@@ -131,7 +131,7 @@ static int process_tmpdir(struct mailbox_transaction_context *ctx,
 
 	buf = t_malloc(20 + ast->tmplen);
 
-	while (cnt > 0) {
+	while (rc == 0 && cnt > 0) {
 		cnt--;
 		i_snprintf(buf, 20 + ast->tmplen - 1, "%s/%d",
 			   ast->tmpdir, cnt);
@@ -144,8 +144,9 @@ static int process_tmpdir(struct mailbox_transaction_context *ctx,
 					       "failed to send mail");
 			debug("run program failed with exit code %d\n", rc);
 			rc = -1;
-			break;
 		}
+
+		close(fd);
 	}
 
 	t_pop();
