@@ -48,6 +48,7 @@ static char *default_spam_folders[] = {
 };
 static char **spam_folders = default_spam_folders;
 static char **unsure_folders = NULL;
+bool antispam_can_append_to_spam = FALSE;
 
 static bool mailbox_in_list(struct mailbox *box, char **list)
 {
@@ -125,6 +126,12 @@ void PLUGIN_FUNCTION(init)(void)
 	tmp = get_setting("SPAM");
 	if (tmp)
 		spam_folders = p_strsplit(global_pool, tmp, ";");
+
+	tmp = get_setting("ALLOW_APPEND_TO_SPAM");
+	if (tmp && strcasecmp(tmp, "yes") == 0) {
+		antispam_can_append_to_spam = TRUE;
+		debug("allowing APPEND to spam folders");
+	}
 
 	if (spam_folders) {
 		iter = spam_folders;

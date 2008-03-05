@@ -114,6 +114,11 @@ plugin {
     # semicolon-separated list of unsure folders (default unset i.e. none)
     # antispam_unsure =
 
+    # Whether to allow APPENDing to SPAM folders or not. Must be set to
+    # "yes" (case insensitive) to be activated. Before activating, please
+    # read the discussion below.
+    # antispam_allow_append_to_spam = no
+
     ###########################
     # BACKEND SPECIFIC OPTIONS
     #
@@ -160,6 +165,23 @@ plugin {
     antispam_signature = X-CRM114-CacheID
 }
 .fi
+
+.SH ALLOWING APPENDS?
+
+You should be careful with allowing APPENDs to SPAM folders. The reason
+for possibly allowing it is to allow not-SPAM --> SPAM transitions to work
+with offlineimap. However, because with APPEND the plugin cannot know the
+source of the message, multiple bad scenarios can happen:
+
+.IP " 1." 4
+SPAM --> SPAM transitions cannot be recognised and are trained
+
+.IP " 2." 4
+the same holds for Trash --> SPAM transitions
+
+.PP
+Additionally, because we cannot recognise SPAM --> not-SPAM transitions,
+training good messages will never work with APPEND.
 
 .SH AUTHORS
 

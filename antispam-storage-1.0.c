@@ -166,14 +166,55 @@ static int antispam_save_finish(struct mail_save_context *ctx,
 	case MMT_UNINTERESTING:
 		break;
 	case MMT_APPEND:
-		/* Disallow APPENDs to SPAM/UNSURE folders. */
-		if (mailbox_is_spam(save_dest_mail->box) ||
-		    mailbox_is_unsure(save_dest_mail->box)) {
+		/* Disallow APPENDs to UNSURE folders. */
+		if (mailbox_is_unsure(save_dest_mail->box)) {
 			ret = -1;
 			mail_storage_set_error(save_dest_mail->box->storage,
-					"Cannot APPEND to this folder.");
+					"Cannot APPEND to an UNSURE folder.");
+			break;
+		} else if (mailbox_is_spam(save_dest_mail->box)) {
+			/*
+			 * The client is APPENDing a message to a SPAM folder
+			 * so we try to train the backend on it. For most of
+			 * the backends, that can only succeed if the message
+			 * contains appropriate information.
+			 *
+			 * This happens especially when offlineimap is used and
+			 * the user moved a message to the SPAM folder while
+			 * offline---offlineimap cannot reproduce the COPY but
+			 * rather APPENDs the moved message on the next sync.
+			 *
+			 * This could be a bad if the spam headers were not
+			 * generated on our server, but since the user can
+			 * always APPEND to another folder and then COPY to a
+			 * SPAM folder backends need to be prepared for cases
+			 * like this anyway. With dspam, for example, the worst
+			 * that can happen is that the APPEND fails with a
+			 * training error from dspam.
+			 *
+			 * Unfortunately, we cannot handle the cases where
+			 *  (1) the user moved a message from one folder that
+			 *      contains SPAM to another folder containing SPAM
+			 *  (2) the user moved a message out of the SPAM folder
+			 *  (3) the user recovered a message from trash
+			 *
+			 * Because of these limitations, this behaviour needs
+			 * to be enabled with an option.
+			 */
+			if (!antispam_can_append_to_spam) {
+				ret = -1;
+				mail_storage_set_error(
+					save_dest_mail->box->storage,
+					"Cannot APPEND to a SPAM folder.");
+				break;
+			}
+			asbox->movetype = MMT_TO_SPAM;
+			/* fall through to default case to invoke backend */
+		} else {
+			/* neither UNSURE nor SPAM, regular folder */
+			break;
 		}
-		break;
+		/* fall through */
 	default:
 		ret = backend_handle_mail(ctx->transaction, ast, save_dest_mail,
 					  move_to_class(asbox->movetype));

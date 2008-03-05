@@ -50,5 +50,6 @@ bool mailbox_is_spam(struct mailbox *box);
 bool mailbox_is_trash(struct mailbox *box);
 bool mailbox_is_unsure(struct mailbox *box);
 const char *get_setting(const char *name);
+bool antispam_can_append_to_spam;
         
 #endif /* _ANTISPAM_PLUGIN_H */
