@@ -139,7 +139,7 @@ static int process_tmpdir(struct mailbox_transaction_context *ctx,
 		fd = open(buf, O_RDONLY);
 		read(fd, &wanted, sizeof(wanted));
 
-		if (run_sendmail(fd, wanted)) {
+		if ((rc = run_sendmail(fd, wanted))) {
 			mail_storage_set_error(ctx->box->storage,
 					       "failed to send mail");
 			debug("run program failed with exit code %d\n", rc);
