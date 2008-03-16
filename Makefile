@@ -1,6 +1,11 @@
 # include config file
+CFLAGSORIG := $(CFLAGS)
 CONFIG ?= .config
 -include $(CONFIG)
+-include $(DOVECOT)/dovecot-config
+INSTALLDIR ?= $(moduledir)/imap
+# Kill CFLAGS from dovecot-config
+CFLAGS := $(CFLAGSORIG)
 
 # includes/flags we need for building a dovecot plugin
 CFLAGS += -DHAVE_CONFIG_H
