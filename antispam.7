@@ -78,6 +78,10 @@ This backend sends mail to ham@example.com or spam@example.com
 be very fast to set up if you already have a working setup that uses
 training addresses as recommended by many spam filter setups.
 
+Since this backend simply pipes the message to a program (by default
+sendmail) it can also be used for all kinds of other spam filters,
+for example spamassassin (by calling sa-learn instead of sendmail.)
+
 .SS crm114 executable backend (crm114 specific)
 
 This backend instantly retrains by calling mailreaver.crm which
