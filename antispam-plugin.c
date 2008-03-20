@@ -191,7 +191,7 @@ void PLUGIN_FUNCTION(init)(void)
 	}
 
 	/* set spam_folders to empty to only allow keywords */
-	need_folder_hook = !!spam_folder_count;
+	need_folder_hook = spam_folder_count > 0;
 	need_keyword_hook = !!spam_keywords;
 
 	backend_init(global_pool);
