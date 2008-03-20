@@ -49,6 +49,11 @@ static char *default_spam_folders[] = {
 static char **spam_folders = default_spam_folders;
 static char **unsure_folders = NULL;
 bool antispam_can_append_to_spam = FALSE;
+static char **spam_keywords = NULL;
+
+bool need_keyword_hook;
+bool need_folder_hook;
+
 
 static bool mailbox_in_list(struct mailbox *box, char **list)
 {
@@ -79,6 +84,22 @@ bool mailbox_is_unsure(struct mailbox *box)
 	return mailbox_in_list(box, unsure_folders);
 }
 
+bool keyword_is_spam(const char *keyword)
+{
+	char **k = spam_keywords;
+
+	if (!spam_keywords)
+		return FALSE;
+
+	while (*k) {
+		if (strcmp(*k, keyword) == 0)
+			return TRUE;
+		k++;
+	}
+
+	return FALSE;
+}
+
 const char *get_setting(const char *name)
 {
 	const char *env;
@@ -105,6 +126,7 @@ void PLUGIN_FUNCTION(init)(void)
 {
 	const char *tmp;
 	char * const *iter;
+	int spam_folder_count = 0;
 
 	debug("plugin initialising\n");
 
@@ -127,17 +149,12 @@ void PLUGIN_FUNCTION(init)(void)
 	if (tmp)
 		spam_folders = p_strsplit(global_pool, tmp, ";");
 
-	tmp = get_setting("ALLOW_APPEND_TO_SPAM");
-	if (tmp && strcasecmp(tmp, "yes") == 0) {
-		antispam_can_append_to_spam = TRUE;
-		debug("allowing APPEND to spam folders");
-	}
-
 	if (spam_folders) {
 		iter = spam_folders;
 		while (*iter) {
 			debug("\"%s\" is spam folder\n", *iter);
 			iter++;
+			spam_folder_count++;
 		}
 	} else
 		debug("no spam folders\n");
@@ -154,6 +171,28 @@ void PLUGIN_FUNCTION(init)(void)
 		}
 	} else
 		debug("no unsure folders\n");
+
+	tmp = get_setting("ALLOW_APPEND_TO_SPAM");
+	if (tmp && strcasecmp(tmp, "yes") == 0) {
+		antispam_can_append_to_spam = TRUE;
+		debug("allowing APPEND to spam folders");
+	}
+
+	tmp = get_setting("SPAM_KEYWORDS");
+	if (tmp)
+		spam_keywords = p_strsplit(global_pool, tmp, ";");
+
+	if (spam_keywords) {
+		iter = spam_keywords;
+		while (*iter) {
+			debug("\"%s\" is spam keyword\n", *iter);
+			iter++;
+		}
+	}
+
+	/* set spam_folders to empty to only allow keywords */
+	need_folder_hook = !!spam_folder_count;
+	need_keyword_hook = !!spam_keywords;
 
 	backend_init(global_pool);
 

@@ -16,6 +16,7 @@ CFLAGS += -I$(DOVECOT)/src/lib-storage/
 CFLAGS += -I$(DOVECOT)/src/lib-mail/
 CFLAGS += -I$(DOVECOT)/src/lib-imap/
 CFLAGS += -I$(DOVECOT)/src/lib-dict/
+CFLAGS += -I$(DOVECOT)/src/lib-index/
 CFLAGS += -I$(DOVECOT)/src/imap/
 
 # output name

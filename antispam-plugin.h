@@ -51,5 +51,9 @@ bool mailbox_is_trash(struct mailbox *box);
 bool mailbox_is_unsure(struct mailbox *box);
 const char *get_setting(const char *name);
 bool antispam_can_append_to_spam;
+bool keyword_is_spam(const char *keyword);
+
+extern bool need_keyword_hook;
+extern bool need_folder_hook;
         
 #endif /* _ANTISPAM_PLUGIN_H */

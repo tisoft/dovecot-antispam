@@ -12,6 +12,7 @@
 #include "array.h"
 #include "istream.h"
 #include "mail-search.h"
+#include "mail-index.h"
 #include "mail-storage-private.h"
 
 #include "antispam-plugin.h"
@@ -51,6 +52,10 @@ struct antispam_mailbox {
 
 	/* used to check if copy was implemented with save */
 	unsigned int save_hack:1;
+};
+
+struct antispam_mail {
+	struct mail_vfuncs super;
 };
 
 static unsigned int antispam_storage_module_id = 0;
@@ -257,6 +262,98 @@ antispam_transaction_commit(struct mailbox_transaction_context *ctx,
 	return ret;
 }
 
+static int
+antispam_mail_update_keywords(struct mail *mail,
+			      enum modify_type modify_type,
+			      struct mail_keywords *keywords)
+{
+	struct mail_private *pmail = (struct mail_private *)mail;
+	struct antispam_mail *amail = ANTISPAM_CONTEXT(pmail);
+	int ret;
+	unsigned int i, numkwds;
+	const array_t *idxkwd = mail_index_get_keywords(keywords->index);
+	const char *const *keyword_names = array_get(idxkwd, &numkwds);
+	const char *const *orig_keywords;
+	bool previous_spam_keyword, now_spam_keyword;
+
+	switch (modify_type) {
+	case MODIFY_ADD:
+		debug("adding keyword(s)\n");
+		break;
+	case MODIFY_REMOVE:
+		debug("removing keyword(s)\n");
+		break;
+	case MODIFY_REPLACE:
+		debug("replacing keyword(s)\n");
+		break;
+	default:
+		i_assert(0);
+	}
+
+	orig_keywords = pmail->v.get_keywords(mail);
+	if (orig_keywords) {
+		debug("original keyword list:\n");
+		while (*orig_keywords) {
+			debug(" * %s\n", *orig_keywords);
+			if (keyword_is_spam(*orig_keywords))
+				previous_spam_keyword = TRUE;
+			orig_keywords++;
+		}
+	}
+
+	debug("keyword list:\n");
+
+	for (i = 0; i < keywords->count; i++) {
+		unsigned int idx = keywords->idx[i];
+
+		i_assert(idx < numkwds);
+
+		debug(" * %s\n", keyword_names[idx]);
+
+		switch (modify_type) {
+		case MODIFY_ADD:
+		case MODIFY_REPLACE:
+			if (keyword_is_spam(keyword_names[idx]))
+				now_spam_keyword = TRUE;
+			break;
+		case MODIFY_REMOVE:
+			if (keyword_is_spam(keyword_names[idx]))
+				now_spam_keyword = FALSE;
+			break;
+		default:
+			i_assert(0);
+		}
+	}
+
+	ret = amail->super.update_keywords(mail, modify_type, keywords);
+
+	debug("ret = %d\n", ret);
+
+	debug("previous-spam, now-spam: %d, %d\n",
+	      previous_spam_keyword, now_spam_keyword);
+
+	if (previous_spam_keyword != now_spam_keyword) {
+		/*
+		 * Call backend here.
+		 *
+		 * TODO: It is not clear how to roll back the
+		 *       keyword change if the backend fails.
+		 */
+	}
+
+	return ret;
+}
+
+static void
+antispam_mail_free(struct mail *mail)
+{
+	struct mail_private *pmail = (struct mail_private *)mail;
+	struct antispam_mail *amail = ANTISPAM_CONTEXT(pmail);
+
+	amail->super.free(mail);
+	i_free(amail);
+}
+
 static struct mailbox_transaction_context *
 antispam_mailbox_transaction_begin(struct mailbox *box,
 				   enum mailbox_transaction_flags flags)
@@ -296,6 +393,33 @@ antispam_mailbox_transaction_rollback(struct mailbox_transaction_context *ctx)
 	asbox->super.transaction_rollback(ctx);
 }
 
+static struct mail *
+antispam_mailbox_mail_alloc(struct mailbox_transaction_context *ctx,
+			    enum mail_fetch_field wanted_fields,
+			    struct mailbox_header_lookup_ctx *wanted_headers)
+{
+	struct antispam_mailbox *asbox = ANTISPAM_CONTEXT(ctx->box);
+	struct antispam_mail *amail = i_new(struct antispam_mail, 1);
+	struct mail_private *pmail;
+
+	/* XXX: is this cast the right thing to do? */
+	pmail = (struct mail_private *) asbox->super.mail_alloc(
+						ctx,
+						wanted_fields,
+						wanted_headers);
+
+	amail->super = pmail->v;
+
+	array_idx_set(&pmail->module_contexts,
+		      antispam_storage_module_id,
+		      &amail);
+
+	pmail->v.update_keywords = antispam_mail_update_keywords;
+	pmail->v.free = antispam_mail_free;
+
+	return (struct mail *)pmail;
+}
+
 static struct mailbox *antispam_mailbox_open(struct mail_storage *storage,
 					     const char *name,
 					     struct istream *input,
@@ -314,13 +438,19 @@ static struct mailbox *antispam_mailbox_open(struct mail_storage *storage,
 	asbox->save_hack = FALSE;
 	asbox->movetype = MMT_APPEND;
 
-	/* override save_init to override want_mail, we need that */
-	box->v.save_init = antispam_save_init;
-	box->v.save_finish = antispam_save_finish;
-	box->v.transaction_begin = antispam_mailbox_transaction_begin;
-	box->v.transaction_commit = antispam_mailbox_transaction_commit;
-	box->v.transaction_rollback = antispam_mailbox_transaction_rollback;
-	box->v.copy = antispam_copy;
+	if (need_folder_hook) {
+		/* override save_init to override want_mail, we need that */
+		box->v.save_init = antispam_save_init;
+		box->v.save_finish = antispam_save_finish;
+		box->v.transaction_begin = antispam_mailbox_transaction_begin;
+		box->v.transaction_commit = antispam_mailbox_transaction_commit;
+		box->v.transaction_rollback = antispam_mailbox_transaction_rollback;
+		box->v.copy = antispam_copy;
+	}
+
+	if (need_keyword_hook)
+		box->v.mail_alloc = antispam_mailbox_mail_alloc;
+
 	array_idx_set(&box->module_contexts, antispam_storage_module_id,
 		      &asbox);
 	return box;
