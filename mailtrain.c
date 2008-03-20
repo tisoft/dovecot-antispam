@@ -60,6 +60,8 @@ static int run_sendmail(int mailfd, enum classification wanted)
 	if (pid == -1)
 		return -1;
 
+	debug("running mailtrain backend program %s", sendmail_binary);
+
 	if (pid) {
 		if (waitpid(pid, &status, 0) == -1)
 			return -1;
