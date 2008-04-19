@@ -31,6 +31,10 @@ CFLAGS += -DCONFIG_DEBUG -DDEBUG_SYSLOG
 objs += debug.o
 endif
 
+ifeq ("$(DEBUG_VERBOSE)", "1")
+CFLAGS += -DCONFIG_DEBUG_VERBOSE
+endif
+
 # dovecot version rules
 objs += antispam-storage-$(DOVECOT_VERSION).o
 ifeq ("$(DOVECOT_VERSION)", "1.0")

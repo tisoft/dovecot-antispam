@@ -39,7 +39,17 @@ int backend_commit(struct mailbox_transaction_context *ctx,
 void debug(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 #else
 static void debug(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
-static inline void debug(const char *fmt, ...)
+static inline void debug(const char *fmt __attribute__((unused)), ...)
+{
+}
+#endif
+
+#if defined(CONFIG_DEBUG) && defined(CONFIG_DEBUG_VERBOSE)
+/* bit of an ugly short-cut */
+#define debug_verbose	debug
+#else
+static void debug_verbose(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+static inline void debug_verbose(const char *fmt __attribute__((unused)), ...)
 {
 }
 #endif

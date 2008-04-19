@@ -71,6 +71,7 @@ antispam_copy(struct mailbox_transaction_context *t, struct mail *mail,
 		ANTISPAM_CONTEXT(t);
 	struct mail *copy_dest_mail;
 	int ret;
+	bool src_trash, dst_trash;
 
 	if (dest_mail != NULL)
 		copy_dest_mail = dest_mail;
@@ -88,11 +89,20 @@ antispam_copy(struct mailbox_transaction_context *t, struct mail *mail,
 		return -1;
 	}
 
-	if (!mailbox_is_trash(mail->box) &&
-	    !mailbox_is_trash(t->box)) {
+	src_trash = mailbox_is_trash(mail->box);
+	dst_trash = mailbox_is_trash(t->box);
+
+	debug_verbose("mail copy: from trash: %d, to trash: %d\n",
+	              src_trash, dst_trash);
+
+	if (!src_trash && !dst_trash) {
 		bool src_spam = mailbox_is_spam(mail->box);
 		bool dst_spam = mailbox_is_spam(t->box);
 		bool src_unsu = mailbox_is_unsure(mail->box);
+
+		debug_verbose("mail copy: src spam: %d, dst spam: %d,"
+		              " src unsure: %d\n",
+		              src_spam, dst_spam, src_unsu);
 
 		if ((src_spam || src_unsu) && !dst_spam)
 			asbox->movetype = MMT_TO_CLEAN;
