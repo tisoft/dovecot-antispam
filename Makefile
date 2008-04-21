@@ -81,7 +81,7 @@ clean:
 	rm -f *.so *.o *~
 
 install: all
-	install -o root -g root -m 0660 $(LIBRARY_NAME) $(INSTALLDIR)/
+	install -o $(USER) -g $(GROUP) -m 0660 $(LIBRARY_NAME) $(INSTALLDIR)/
 
 verify_config:
 	@if [ ! -r $(CONFIG) ]; then \

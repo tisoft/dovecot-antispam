@@ -35,7 +35,11 @@ DOVECOT_VERSION=1.0
 
 
 # install directory for 'make install'
-INSTALLDIR=/usr/lib/dovecot/modules/imap/
+# NB no need for a final '/'
+INSTALLDIR=/usr/lib/dovecot/modules/imap
+# The user and group for the installed plugin
+USER=root
+GROUP=root
 
 # enable debugging to syslog or stderr
 #DEBUG=stderr
