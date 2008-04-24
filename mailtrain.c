@@ -213,7 +213,9 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 	struct istream *mailstream;
 	struct ostream *outstream;
 	int ret;
-	char *buf, *firstline;
+	char *buf;
+	const unsigned char *beginning;
+	size_t size;
 	int fd;
 
 	if (!ast->tmpdir) {
@@ -266,15 +268,25 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 		goto failed_to_copy;
 	}
 
-	firstline = i_stream_read_next_line(mailstream);
+	if (i_stream_read_data(mailstream, &beginning, &size, 5) < 0 ||
+	    size < 5) {
+		ret = -1;
+		mail_storage_set_error(t->box->storage,
+				       "Failed to read mail beginning");
+		goto failed_to_copy;
+	}
 
-	if (strncmp(firstline, "From ", 5) != 0)
-		if (o_stream_send_str(outstream, firstline) < 0) {
+	/* "From "? skip line */
+	if (memcmp("From ", beginning, 5) == 0) {
+		i_stream_read_next_line(mailstream);
+	} else {
+		if (o_stream_send_str(outstream, "From ") < 0) {
 			ret = -1;
 			mail_storage_set_error(t->box->storage,
 					       "Failed to write line to temp");
 			goto failed_to_copy;
 		}
+	}
 
 	if (o_stream_send_istream(outstream, mailstream) < 0) {
 		ret = -1;
