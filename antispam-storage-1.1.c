@@ -29,11 +29,6 @@ static MODULE_CONTEXT_DEFINE_INIT(antispam_mail_module,
                                   &mail_module_register);
 
                                  
-struct antispam_mail_storage {
-	union mail_storage_module_context module_ctx;
-	struct antispam *antispam;
-};
-
 enum mailbox_move_type {
 	MMT_APPEND,
 	MMT_UNINTERESTING,
@@ -47,7 +42,7 @@ struct antispam_internal_context {
 	struct mail *mail;
 };
 
-enum classification move_to_class(enum mailbox_move_type tp)
+static enum classification move_to_class(enum mailbox_move_type tp)
 {
 	switch (tp) {
 	case MMT_TO_CLEAN:
@@ -458,11 +453,11 @@ static struct mailbox *antispam_mailbox_open(struct mail_storage *storage,
 					     struct istream *input,
 					     enum mailbox_open_flags flags)
 {
-	struct antispam_mail_storage *as_storage = ANTISPAM_CONTEXT(storage);
+	union mail_storage_module_context *as_storage = ANTISPAM_CONTEXT(storage);
 	struct mailbox *box;
 	struct antispam_mailbox *asbox;
 
-	box = as_storage->module_ctx.super.mailbox_open(storage, name, input, flags);
+	box = as_storage->super.mailbox_open(storage, name, input, flags);
 	if (box == NULL)
 		return NULL;
 
@@ -490,14 +485,13 @@ static struct mailbox *antispam_mailbox_open(struct mail_storage *storage,
 
 void antispam_mail_storage_created(struct mail_storage *storage)
 {
-	struct antispam_mail_storage *as_storage;
-	union mail_storage_module_context *astorage;
+	union mail_storage_module_context *as_storage;
 
 	if (antispam_next_hook_mail_storage_created != NULL)
 		antispam_next_hook_mail_storage_created(storage);
 
-	as_storage = p_new(storage->pool, struct antispam_mail_storage, 1);
-	as_storage->module_ctx.super = storage->v;
+	as_storage = p_new(storage->pool, union mail_storage_module_context, 1);
+	as_storage->super = storage->v;
 	storage->v.mailbox_open = antispam_mailbox_open;
 
 	if (!antispam_storage_module_id_set) {
@@ -505,5 +499,5 @@ void antispam_mail_storage_created(struct mail_storage *storage)
 		antispam_storage_module_id_set = TRUE;
 	}
 
-	MODULE_CONTEXT_SET_SELF(storage, antispam_storage_module, astorage);
+	MODULE_CONTEXT_SET_SELF(storage, antispam_storage_module, as_storage);
 }
