@@ -38,9 +38,11 @@ endif
 # dovecot version rules
 objs += antispam-storage-$(DOVECOT_VERSION).o
 ifeq ("$(DOVECOT_VERSION)", "1.0")
+CFLAGS += -DCONFIG_DOVECOT_10
 CFLAGS += -Dstr_array_length=strarray_length
 CFLAGS += "-Dmempool_unref(x)=pool_unref(*(x))"
 else
+CFLAGS += -DCONFIG_DOVECOT_11
 CFLAGS += "-Dmempool_unref(x)=pool_unref(x)"
 endif
 

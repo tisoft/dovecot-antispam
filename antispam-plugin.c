@@ -40,6 +40,10 @@ extern void (*hook_mail_storage_created)(struct mail_storage *storage);
 /* internal stuff we need */
 #include "antispam-plugin.h"
 
+#ifdef CONFIG_DOVECOT_11
+uint32_t PLUGIN_FUNCTION(id) = 0;
+#endif
+
 static pool_t global_pool;
 static char **trash_folders = NULL;
 static char *default_spam_folders[] = {
@@ -117,13 +121,6 @@ const char *get_setting(const char *name)
 
 	return env;
 }
-
-#define __PLUGIN_FUNCTION(name, ioe) \
-	name ## _plugin_ ## ioe
-#define _PLUGIN_FUNCTION(name, ioe) \
-	__PLUGIN_FUNCTION(name, ioe)
-#define PLUGIN_FUNCTION(ioe)	\
-	_PLUGIN_FUNCTION(PLUGINNAME, ioe)
 
 void PLUGIN_FUNCTION(init)(void)
 {

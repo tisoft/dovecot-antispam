@@ -10,6 +10,14 @@
 #define __stringify_1(x)	#x
 #define stringify(x)		__stringify_1(x)
 
+#define __PLUGIN_FUNCTION(name, ioe) \
+	name ## _plugin_ ## ioe
+#define _PLUGIN_FUNCTION(name, ioe) \
+	__PLUGIN_FUNCTION(name, ioe)
+#define PLUGIN_FUNCTION(ioe)	\
+	_PLUGIN_FUNCTION(PLUGINNAME, ioe)
+
+extern uint32_t PLUGIN_FUNCTION(id);
 
 struct antispam_transaction_context;
 
