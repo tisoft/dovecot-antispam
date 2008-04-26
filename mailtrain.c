@@ -143,6 +143,7 @@ static int process_tmpdir(struct mailbox_transaction_context *ctx,
 
 		if ((rc = run_sendmail(fd, wanted))) {
 			mail_storage_set_error(ctx->box->storage,
+					       ME(TEMP)
 					       "failed to send mail");
 			debug("run program failed with exit code %d\n", rc);
 			rc = -1;
@@ -220,19 +221,27 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 
 	if (!ast->tmpdir) {
 		mail_storage_set_error(t->box->storage,
+				       ME(NOTPOSSIBLE)
 				       "Failed to initialise temporary dir");
 		return -1;
 	}
 
 	if (!hamaddr || !spamaddr) {
 		mail_storage_set_error(t->box->storage,
+				       ME(NOTPOSSIBLE)
 				       "antispam plugin not configured");
 		return -1;
 	}
 
+#ifdef CONFIG_DOVECOT_11
+	if (mail_get_stream(mail, NULL, NULL, &mailstream) < 0)
+		mailstream = NULL;
+#else
 	mailstream = mail_get_stream(mail, NULL, NULL);
+#endif
 	if (!mailstream) {
 		mail_storage_set_error(t->box->storage,
+				       ME(EXPUNGED)
 				       "Failed to get mail contents");
 		return -1;
 	}
@@ -245,6 +254,7 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 	fd = creat(buf, 0600);
 	if (fd < 0) {
 		mail_storage_set_error(t->box->storage,
+				       ME(NOTPOSSIBLE)
 				       "Failed to create temporary file");
 		ret = -1;
 		goto out;
@@ -252,10 +262,15 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 
 	ast->count++;
 
+#ifdef CONFIG_DOVECOT_11
+	outstream = o_stream_create_fd(fd, 0, TRUE);
+#else
 	outstream = o_stream_create_file(fd, t->box->pool, 0, TRUE);
+#endif
 	if (!outstream) {
 		ret = -1;
 		mail_storage_set_error(t->box->storage,
+				       ME(NOTPOSSIBLE)
 				       "Failed to stream temporary file");
 		goto out_close;
 	}
@@ -264,6 +279,7 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 			!= sizeof(wanted)) {
 		ret = -1;
 		mail_storage_set_error(t->box->storage,
+				       ME(NOTPOSSIBLE)
 				       "Failed to write marker to temp file");
 		goto failed_to_copy;
 	}
@@ -272,6 +288,7 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 	    size < 5) {
 		ret = -1;
 		mail_storage_set_error(t->box->storage,
+				       ME(NOTPOSSIBLE)
 				       "Failed to read mail beginning");
 		goto failed_to_copy;
 	}
@@ -283,6 +300,7 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 		if (o_stream_send_str(outstream, "From ") < 0) {
 			ret = -1;
 			mail_storage_set_error(t->box->storage,
+					       ME(NOTPOSSIBLE)
 					       "Failed to write line to temp");
 			goto failed_to_copy;
 		}
@@ -291,6 +309,7 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 	if (o_stream_send_istream(outstream, mailstream) < 0) {
 		ret = -1;
 		mail_storage_set_error(t->box->storage,
+				       ME(NOTPOSSIBLE)
 				       "Failed to copy to temporary file");
 		goto failed_to_copy;
 	}

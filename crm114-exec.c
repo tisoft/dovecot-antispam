@@ -154,6 +154,7 @@ int backend_commit(struct mailbox_transaction_context *ctx,
 		if (call_reaver(item->sig, item->wanted)) {
 			ret = -1;
 			mail_storage_set_error(ctx->box->storage,
+					       ME(NOTPOSSIBLE)
 					       "Failed to call reaver");
 			break;
 		}

@@ -73,5 +73,12 @@ bool keyword_is_spam(const char *keyword);
 
 extern bool need_keyword_hook;
 extern bool need_folder_hook;
+
+#ifdef CONFIG_DOVECOT_11
+#define __attr_unused__	ATTR_UNUSED
+#define ME(err)		MAIL_ERROR_ ##err,
+#else
+#define ME(err)
+#endif
         
 #endif /* _ANTISPAM_PLUGIN_H */
