@@ -33,7 +33,7 @@ enum mailbox_move_type {
 	MMT_TO_SPAM,
 };
 
-enum classification move_to_class(enum mailbox_move_type tp)
+static enum classification move_to_class(enum mailbox_move_type tp)
 {
 	switch (tp) {
 	case MMT_TO_CLEAN:
