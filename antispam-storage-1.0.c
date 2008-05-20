@@ -281,10 +281,12 @@ antispam_mail_update_keywords(struct mail *mail,
 	struct antispam_mail *amail = ANTISPAM_CONTEXT(pmail);
 	int ret;
 	unsigned int i, numkwds;
-	const array_t *idxkwd = mail_index_get_keywords(keywords->index);
-	const char *const *keyword_names = array_get(idxkwd, &numkwds);
+	const array_t *ARRAY_DEFINE_PTR(idxkwd,const char *);
+	const char *const *keyword_names;
 	const char *const *orig_keywords;
 	bool previous_spam_keyword, now_spam_keyword;
+	idxkwd = mail_index_get_keywords(keywords->index);
+	keyword_names = array_get(idxkwd, &numkwds);
 
 	switch (modify_type) {
 	case MODIFY_ADD:
