@@ -8,7 +8,7 @@ INSTALLDIR ?= $(moduledir)/imap
 CFLAGS := $(CFLAGSORIG)
 
 # includes/flags we need for building a dovecot plugin
-CFLAGS += -DHAVE_CONFIG_H
+CFLAGS += -DHAVE_CONFIG_H -Wall
 CFLAGS += -I$(DOVECOT)/
 CFLAGS += -I$(DOVECOT)/src/
 CFLAGS += -I$(DOVECOT)/src/lib/
