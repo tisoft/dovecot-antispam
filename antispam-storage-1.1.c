@@ -404,10 +404,10 @@ antispam_mailbox_transaction_rollback(struct mailbox_transaction_context *ctx)
 	struct antispam_mailbox *asbox = ANTISPAM_CONTEXT(ctx->box);
 	struct antispam_internal_context *ast = ANTISPAM_CONTEXT(ctx);
 
-	asbox->module_ctx.super.transaction_rollback(ctx);
-
 	if (ast->mail)
 		mail_free(&ast->mail);
+
+	asbox->module_ctx.super.transaction_rollback(ctx);
 
 	antispam_transaction_rollback(&ast->backendctx);
 }
