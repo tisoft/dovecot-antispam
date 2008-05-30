@@ -63,10 +63,6 @@ struct antispam_mailbox {
 	unsigned int save_hack:1;
 };
 
-struct antispam_mail {
-	union mail_module_context module_ctx;
-};
-
 static uint32_t antispam_storage_module_id = 0;
 static bool antispam_storage_module_id_set = FALSE;
 
@@ -77,14 +73,17 @@ antispam_copy(struct mailbox_transaction_context *t, struct mail *mail,
 {
 	struct antispam_mailbox *asbox = ANTISPAM_CONTEXT(t->box);
 	struct antispam_internal_context *ast = ANTISPAM_CONTEXT(t);
-	struct mail *copy_dest_mail;
 	int ret;
 	bool src_trash, dst_trash;
 
-	if (dest_mail != NULL)
-		copy_dest_mail = dest_mail;
-	else
-		copy_dest_mail = mail_alloc(t, MAIL_FETCH_PHYSICAL_SIZE, NULL);
+	if (!dest_mail) {
+		/* always need mail */
+		if (!ast->mail)
+			ast->mail = mail_alloc(t, MAIL_FETCH_STREAM_HEADER |
+						  MAIL_FETCH_STREAM_BODY,
+					       NULL);
+		dest_mail = ast->mail;
+	}
 
 	i_assert(mail->box);
 
@@ -118,7 +117,8 @@ antispam_copy(struct mailbox_transaction_context *t, struct mail *mail,
 			asbox->movetype = MMT_TO_SPAM;
 	}
 
-	if (asbox->module_ctx.super.copy(t, mail, flags, keywords, copy_dest_mail) < 0)
+	if (asbox->module_ctx.super.copy(t, mail, flags, keywords,
+					 dest_mail) < 0)
 		return -1;
 
 	/*
@@ -127,7 +127,7 @@ antispam_copy(struct mailbox_transaction_context *t, struct mail *mail,
 	if (asbox->save_hack || asbox->movetype == MMT_UNINTERESTING)
 		ret = 0;
 	else
-		ret = backend_handle_mail(t, ast->backendctx, copy_dest_mail,
+		ret = backend_handle_mail(t, ast->backendctx, dest_mail,
 					  move_to_class(asbox->movetype));
 
 	/*
@@ -141,9 +141,6 @@ antispam_copy(struct mailbox_transaction_context *t, struct mail *mail,
 	 * save to the mailbox should not invoke the backend.
 	 */
 	asbox->movetype = MMT_APPEND;
-
-	if (copy_dest_mail != dest_mail)
-		mail_free(&copy_dest_mail);
 	return ret;
 }
 
@@ -157,9 +154,11 @@ static int antispam_save_init(struct mailbox_transaction_context *t,
 	struct antispam_internal_context *ast = ANTISPAM_CONTEXT(t);
 	struct antispam_mailbox *asbox = ANTISPAM_CONTEXT(t->box);
 
-	if (!dest_mail && !ast->mail) {
-		ast->mail = mail_alloc(t, MAIL_FETCH_STREAM_HEADER |
-					  MAIL_FETCH_STREAM_BODY, NULL);
+	if (!dest_mail) {
+		if (!ast->mail)
+			ast->mail = mail_alloc(t, MAIL_FETCH_STREAM_HEADER |
+						  MAIL_FETCH_STREAM_BODY,
+					       NULL);
 		dest_mail = ast->mail;
 	}
 	return asbox->module_ctx.super.save_init(t, flags, keywords, received_date,
@@ -285,7 +284,7 @@ antispam_mail_update_keywords(struct mail *mail,
 			      struct mail_keywords *keywords)
 {
 	struct mail_private *pmail = (struct mail_private *)mail;
-	struct antispam_mail *amail = ANTISPAM_MAIL_CONTEXT(pmail);
+	union mail_module_context *amail = ANTISPAM_MAIL_CONTEXT(pmail);
 	unsigned int i, numkwds;
 	const ARRAY_TYPE(keywords) *idxkwd = mail_index_get_keywords(keywords->index);
 	const char *const *keyword_names = array_get(idxkwd, &numkwds);
@@ -341,7 +340,7 @@ antispam_mail_update_keywords(struct mail *mail,
 		}
 	}
 
-	amail->module_ctx.super.update_keywords(mail, modify_type, keywords);
+	amail->super.update_keywords(mail, modify_type, keywords);
 
 	debug("previous-spam, now-spam: %d, %d\n",
 	      previous_spam_keyword, now_spam_keyword);
@@ -354,16 +353,6 @@ antispam_mail_update_keywords(struct mail *mail,
 		 *       keyword change if the backend fails.
 		 */
 	}
-}
-
-static void
-antispam_mail_free(struct mail *mail)
-{
-	struct mail_private *pmail = (struct mail_private *)mail;
-	struct antispam_mail *amail = ANTISPAM_MAIL_CONTEXT(pmail);
-
-	amail->module_ctx.super.free(mail);
-	i_free(amail);
 }
 
 static struct mailbox_transaction_context *
@@ -429,23 +418,20 @@ antispam_mailbox_mail_alloc(struct mailbox_transaction_context *ctx,
 			    struct mailbox_header_lookup_ctx *wanted_headers)
 {
 	struct antispam_mailbox *asbox = ANTISPAM_CONTEXT(ctx->box);
-	struct antispam_mail *amail = i_new(struct antispam_mail, 1);
-	struct mail_private *pmail;
+	union mail_module_context *amail;
+	struct mail *_mail;
+	struct mail_private *mail;
 
-	/* XXX: is this cast the right thing to do? */
-	pmail = (struct mail_private *) asbox->module_ctx.super.mail_alloc(
-						ctx,
-						wanted_fields,
-						wanted_headers);
+	_mail = asbox->module_ctx.super.
+		mail_alloc(ctx, wanted_fields, wanted_headers);
+	mail = (struct mail_private *)_mail;
 
-	amail->module_ctx.super = pmail->v;
+	amail = p_new(mail->pool, union mail_module_context, 1);
+	amail->super = mail->v;
 
-	MODULE_CONTEXT_SET(pmail, antispam_mail_module, amail);
-
-	pmail->v.update_keywords = antispam_mail_update_keywords;
-	pmail->v.free = antispam_mail_free;
-
-	return (struct mail *)pmail;
+	mail->v.update_keywords = antispam_mail_update_keywords;
+	MODULE_CONTEXT_SET_SELF(mail, antispam_mail_module, amail);
+	return _mail;
 }
 
 static struct mailbox *antispam_mailbox_open(struct mail_storage *storage,
