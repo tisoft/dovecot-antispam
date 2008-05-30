@@ -52,3 +52,6 @@ GROUP=root
 # (because, for example, you need two instances for different
 # spam filters installed)
 PLUGINNAME=antispam
+
+# extra CFLAGS
+# CFLAGS += -g3
