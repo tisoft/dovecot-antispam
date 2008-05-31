@@ -1,12 +1,12 @@
 #ifndef _ANTISPAM_PLUGIN_H
 #define _ANTISPAM_PLUGIN_H
 
-#include "config.h"
 #include "lib.h"
 #include "str.h"
 #include "client.h"
 #include "ostream.h"
 #include "imap-search.h"
+#include "dovecot-version.h"
 
 #define __stringify_1(x)	#x
 #define stringify(x)		__stringify_1(x)
@@ -79,7 +79,7 @@ extern bool need_folder_hook;
  * Dovecot version compat code
  */
 
-#if defined(CONFIG_DOVECOT_11)
+#if DOVECOT_VERSION_CODE(1, 1) == DOVECOT_VERSION
 #define __attr_unused__		ATTR_UNUSED
 #define ME(err)			MAIL_ERROR_ ##err,
 #define PLUGIN_ID		uint32_t PLUGIN_FUNCTION(id) = 0
@@ -107,7 +107,7 @@ o_stream_create_from_fd(int fd, pool_t pool ATTR_UNUSED)
 {
 	return o_stream_create_fd(fd, 0, TRUE);
 }
-#elif defined(CONFIG_DOVECOT_10)
+#elif DOVECOT_VERSION_CODE(1, 0) == DOVECOT_VERSION
 #define ME(err)
 #define PLUGIN_ID
 #define str_array_length(x)	strarray_length(x)

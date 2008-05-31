@@ -8,16 +8,16 @@ INSTALLDIR ?= $(moduledir)/imap
 CFLAGS := $(CFLAGSORIG)
 
 # includes/flags we need for building a dovecot plugin
-CFLAGS += -DHAVE_CONFIG_H
-CFLAGS += -I$(DOVECOT)/
-CFLAGS += -I$(DOVECOT)/src/
-CFLAGS += -I$(DOVECOT)/src/lib/
-CFLAGS += -I$(DOVECOT)/src/lib-storage/
-CFLAGS += -I$(DOVECOT)/src/lib-mail/
-CFLAGS += -I$(DOVECOT)/src/lib-imap/
-CFLAGS += -I$(DOVECOT)/src/lib-dict/
-CFLAGS += -I$(DOVECOT)/src/lib-index/
-CFLAGS += -I$(DOVECOT)/src/imap/
+INCS += -DHAVE_CONFIG_H
+INCS += -I$(DOVECOT)/
+INCS += -I$(DOVECOT)/src/
+INCS += -I$(DOVECOT)/src/lib/
+INCS += -I$(DOVECOT)/src/lib-storage/
+INCS += -I$(DOVECOT)/src/lib-mail/
+INCS += -I$(DOVECOT)/src/lib-imap/
+INCS += -I$(DOVECOT)/src/lib-dict/
+INCS += -I$(DOVECOT)/src/lib-index/
+INCS += -I$(DOVECOT)/src/imap/
 
 # output name
 LIBRARY_NAME ?= lib90_$(PLUGINNAME)_plugin.so
@@ -33,16 +33,6 @@ endif
 
 ifeq ("$(DEBUG_VERBOSE)", "1")
 CFLAGS += -DCONFIG_DEBUG_VERBOSE
-endif
-
-# dovecot version rules
-objs += antispam-storage-$(DOVECOT_VERSION).o
-ifeq ("$(DOVECOT_VERSION)", "1.0")
-CFLAGS += -DCONFIG_DOVECOT_10
-else
-ifeq ("$(DOVECOT_VERSION)", "1.1")
-CFLAGS += -DCONFIG_DOVECOT_11
-endif
 endif
 
 # backend error check
@@ -66,20 +56,29 @@ endif
 # main make rules
 CFLAGS += -fPIC -shared -Wall -Wextra -DPLUGINNAME=$(PLUGINNAME)
 CC ?= "gcc"
+HOSTCC ?= "gcc"
 
-objs += antispam-plugin.o $(BACKEND).o
-ALL = $(LIBRARY_NAME)
+objs += antispam-plugin.o antispam-storage.o $(BACKEND).o
 
-all: verify_config $(ALL)
+all: verify_config $(LIBRARY_NAME)
 
-%.o:	%.c $(CONFIG) antispam-plugin.h
-	$(CC) -c $(CFLAGS) -o $@ $<
+antispam-storage.o: antispam-storage.c antispam-storage-*.c $(CONFIG) antispam-plugin.h dovecot-version.h
+	$(CC) -c $(CFLAGS) $(INCS) -o $@ $<
+
+%.o:	%.c $(CONFIG) antispam-plugin.h dovecot-version.h
+	$(CC) -c $(CFLAGS) $(INCS) -o $@ $<
 
 $(LIBRARY_NAME): $(objs)
-	$(CC) $(CFLAGS) $(objs) -o $(LIBRARY_NAME) $(LDFLAGS)
+	$(CC) $(CFLAGS) $(INCS) $(objs) -o $(LIBRARY_NAME) $(LDFLAGS)
+
+dovecot-version: dovecot-version.c $(CONFIG)
+	$(HOSTCC) $(INCS) -o dovecot-version dovecot-version.c
+
+dovecot-version.h: dovecot-version
+	./dovecot-version > dovecot-version.h
 
 clean:
-	rm -f *.so *.o *~
+	rm -f *.so *.o *~ dovecot-version dovecot-version.h
 
 install: all
 	install -o $(USER) -g $(GROUP) -m 0660 $(LIBRARY_NAME) $(INSTALLDIR)/

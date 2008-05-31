@@ -2,3 +2,5 @@
 *.so
 .config
 *~
+dovecot-version.h
+dovecot-version
