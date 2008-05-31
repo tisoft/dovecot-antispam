@@ -8,7 +8,7 @@ INSTALLDIR ?= $(moduledir)/imap
 CFLAGS := $(CFLAGSORIG)
 
 # includes/flags we need for building a dovecot plugin
-CFLAGS += -DHAVE_CONFIG_H -Wall
+CFLAGS += -DHAVE_CONFIG_H
 CFLAGS += -I$(DOVECOT)/
 CFLAGS += -I$(DOVECOT)/src/
 CFLAGS += -I$(DOVECOT)/src/lib/
@@ -39,11 +39,10 @@ endif
 objs += antispam-storage-$(DOVECOT_VERSION).o
 ifeq ("$(DOVECOT_VERSION)", "1.0")
 CFLAGS += -DCONFIG_DOVECOT_10
-CFLAGS += -Dstr_array_length=strarray_length
-CFLAGS += "-Dmempool_unref(x)=pool_unref(*(x))"
 else
+ifeq ("$(DOVECOT_VERSION)", "1.1")
 CFLAGS += -DCONFIG_DOVECOT_11
-CFLAGS += "-Dmempool_unref(x)=pool_unref(x)"
+endif
 endif
 
 # backend error check
@@ -69,14 +68,14 @@ CFLAGS += -fPIC -shared -Wall -Wextra -DPLUGINNAME=$(PLUGINNAME)
 CC ?= "gcc"
 
 objs += antispam-plugin.o $(BACKEND).o
-ALL = plugin
+ALL = $(LIBRARY_NAME)
 
 all: verify_config $(ALL)
 
 %.o:	%.c $(CONFIG) antispam-plugin.h
 	$(CC) -c $(CFLAGS) -o $@ $<
 
-plugin: $(objs)
+$(LIBRARY_NAME): $(objs)
 	$(CC) $(CFLAGS) $(objs) -o $(LIBRARY_NAME) $(LDFLAGS)
 
 clean:
