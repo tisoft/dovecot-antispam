@@ -21,12 +21,7 @@ int signature_extract_to_list(struct mailbox_transaction_context *t,
 	const char *const *signatures;
 	struct siglist *item;
 
-#ifdef CONFIG_DOVECOT_11
-	if (mail_get_headers(mail, signature_hdr, &signatures) < 0)
-		signatures = NULL;
-#else
-	signatures = mail_get_headers(mail, signature_hdr);
-#endif
+	signatures = get_mail_headers(mail, signature_hdr);
 	if (!signatures || !signatures[0]) {
 		mail_storage_set_error(t->box->storage,
 				       ME(NOTPOSSIBLE)
@@ -52,12 +47,7 @@ const char *signature_extract(struct mailbox_transaction_context *t,
 {
 	const char *const *signatures;
 
-#ifdef CONFIG_DOVECOT_11
-	if (mail_get_headers(mail, signature_hdr, &signatures) < 0)
-		signatures = NULL;
-#else
-	signatures = mail_get_headers(mail, signature_hdr);
-#endif
+	signatures = get_mail_headers(mail, signature_hdr);
 	if (!signatures || !signatures[0]) {
 		mail_storage_set_error(t->box->storage,
 				       ME(NOTPOSSIBLE)

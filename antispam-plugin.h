@@ -93,6 +93,15 @@ static inline struct istream *get_mail_stream(struct mail *mail)
 	return result;
 }
 
+static inline const char *const *
+get_mail_headers(struct mail *mail, const char *hdr)
+{
+	const char *const *result;
+	if (mail_get_headers(mail, hdr, &result) < 0)
+		return NULL;
+	return result;
+}
+
 static inline struct ostream *
 o_stream_create_from_fd(int fd, pool_t pool ATTR_UNUSED)
 {
@@ -107,6 +116,12 @@ o_stream_create_from_fd(int fd, pool_t pool ATTR_UNUSED)
 static inline struct istream *get_mail_stream(struct mail *mail)
 {
 	return mail_get_stream(mail, NULL, NULL);
+}
+
+static inline const char *const *
+get_mail_headers(struct mail *mail, const char *hdr)
+{
+	return mail_get_headers(mail, hdr);
 }
 
 static inline struct ostream *
