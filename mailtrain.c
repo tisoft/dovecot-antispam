@@ -233,12 +233,7 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 		return -1;
 	}
 
-#ifdef CONFIG_DOVECOT_11
-	if (mail_get_stream(mail, NULL, NULL, &mailstream) < 0)
-		mailstream = NULL;
-#else
-	mailstream = mail_get_stream(mail, NULL, NULL);
-#endif
+	mailstream = get_mail_stream(mail);
 	if (!mailstream) {
 		mail_storage_set_error(t->box->storage,
 				       ME(EXPUNGED)
@@ -262,11 +257,7 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 
 	ast->count++;
 
-#ifdef CONFIG_DOVECOT_11
-	outstream = o_stream_create_fd(fd, 0, TRUE);
-#else
-	outstream = o_stream_create_file(fd, t->box->pool, 0, TRUE);
-#endif
+	outstream = o_stream_create_from_fd(fd, t->box->pool);
 	if (!outstream) {
 		ret = -1;
 		mail_storage_set_error(t->box->storage,

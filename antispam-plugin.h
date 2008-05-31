@@ -1,6 +1,7 @@
 #ifndef _ANTISPAM_PLUGIN_H
 #define _ANTISPAM_PLUGIN_H
 
+#include "config.h"
 #include "lib.h"
 #include "str.h"
 #include "client.h"
@@ -74,14 +75,45 @@ bool keyword_is_spam(const char *keyword);
 extern bool need_keyword_hook;
 extern bool need_folder_hook;
 
+/*
+ * Dovecot version compat code
+ */
+
 #if defined(CONFIG_DOVECOT_11)
 #define __attr_unused__		ATTR_UNUSED
 #define ME(err)			MAIL_ERROR_ ##err,
+#define PLUGIN_ID		uint32_t PLUGIN_FUNCTION(id) = 0
 #define mempool_unref(x)	pool_unref(x)
+
+static inline struct istream *get_mail_stream(struct mail *mail)
+{
+	struct istream *result;
+	if (mail_get_stream(mail, NULL, NULL, &result) < 0)
+		return NULL;
+	return result;
+}
+
+static inline struct ostream *
+o_stream_create_from_fd(int fd, pool_t pool ATTR_UNUSED)
+{
+	return o_stream_create_fd(fd, 0, TRUE);
+}
 #elif defined(CONFIG_DOVECOT_10)
 #define ME(err)
+#define PLUGIN_ID
 #define str_array_length(x)	strarray_length(x)
 #define mempool_unref(x)	pool_unref(*(x))
+
+static inline struct istream *get_mail_stream(struct mail *mail)
+{
+	return mail_get_stream(mail, NULL, NULL);
+}
+
+static inline struct ostream *
+o_stream_create_from_fd(int fd, pool_t pool)
+{
+	return o_stream_create_file(fd, pool, 0, TRUE);
+}
 #else
 #error "Building against this dovecot version is not supported"
 #endif

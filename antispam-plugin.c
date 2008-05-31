@@ -40,9 +40,8 @@ extern void (*hook_mail_storage_created)(struct mail_storage *storage);
 /* internal stuff we need */
 #include "antispam-plugin.h"
 
-#ifdef CONFIG_DOVECOT_11
-uint32_t PLUGIN_FUNCTION(id) = 0;
-#endif
+/* macro since only needed for dovecot 1.1 */
+PLUGIN_ID;
 
 static pool_t global_pool;
 static char **trash_folders = NULL;
