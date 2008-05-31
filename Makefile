@@ -55,8 +55,8 @@ endif
 
 # main make rules
 CFLAGS += -fPIC -shared -Wall -Wextra -DPLUGINNAME=$(PLUGINNAME)
-CC ?= "gcc"
-HOSTCC ?= "gcc"
+CC ?= cc
+HOSTCC ?= cc
 
 objs += antispam-plugin.o antispam-storage.o $(BACKEND).o
 
