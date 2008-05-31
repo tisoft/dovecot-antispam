@@ -1,0 +1,43 @@
+This package was debianized by Johannes Berg <johannes@sipsolutions.net> on
+Sat, 31 May 2008 11:50:41 +0200.
+
+It was downloaded from http://johannes.sipsolutions.net/Projects/dovecot-antispam
+
+Upstream Authors:
+
+    Johannes Berg <johannes@sipsolutions.net>
+    Frank Cusack
+    Benedikt Boehm
+    Andreas Schneider
+    Timo Sirainen
+
+Copyright:
+
+    Copyright (C) 2004-2008 Johannes Berg
+    Copyright (C) 2005 Timo Sirainen
+    Copyright (C) 2006  Frank Cusack
+    Copyright (C) Benedikt Boehm
+    Copyright (C) Andreas Schneider
+
+License:
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License Version 2 as
+    published by the Free Software Foundation.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+
+On Debian systems, the complete text of the GNU General
+Public License can be found in `/usr/share/common-licenses/GPL'.
+
+The Debian packaging is licensed under the GPL, see above, and has
+the following copyright:
+
+Copyright (C) 2008  Johannes Berg <johannes@sipsolutions.net>

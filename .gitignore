@@ -4,3 +4,5 @@
 *~
 dovecot-version.h
 dovecot-version
+*.log
+debian/dovecot-antispam-*/

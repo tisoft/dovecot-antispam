@@ -1,0 +1,46 @@
+Source: dovecot-antispam
+Section: mail
+Priority: optional
+Maintainer: Johannes Berg <johannes@sipsolutions.net>
+Build-Depends: debhelper (>= 6), dovecot-dev
+Standards-Version: 3.7.3
+Homepage: http://johannes.sipsolutions.net/Projects/dovecot-antispam
+
+Package: dovecot-antispam-crm114
+Architecture: any
+Depends: dovecot-imapd, ${shlibs:Depends}
+Provides: dovecot-antispam
+Conflicts: dovecot-antispam
+Description: Dovecot IMAP server antispam plugin
+ The Dovecot IMAP server antispam plugin is an IMAP server extension
+ helping you train your spam filter.
+ .
+ This package contains the crm114 version of the plugin.
+Tag: mail::imap, works-with::mail
+
+Package: dovecot-antispam-dspam
+Architecture: any
+Depends: dovecot-imapd, ${shlibs:Depends}
+Provides: dovecot-antispam
+Conflicts: dovecot-antispam
+Description: Dovecot IMAP server antispam plugin
+ The Dovecot IMAP server antispam plugin is an IMAP server extension
+ helping you train your spam filter.
+ .
+ This package contains the dspam version of the plugin.
+Tag: mail::imap, works-with::mail
+
+Package: dovecot-antispam-mailtrain
+Architecture: any
+Depends: dovecot-imapd, ${shlibs:Depends}
+Provides: dovecot-antispam
+Conflicts: dovecot-antispam
+Description: Dovecot IMAP server antispam plugin
+ The Dovecot IMAP server antispam plugin is an IMAP server extension
+ helping you train your spam filter.
+ .
+ This package contains the mailtrain version of the plugin; due to
+ simply piping the message to the learning process it can also be
+ used with any other spam filter, for example spamassassin (via
+ sa-learn.)
+Tag: mail::imap, works-with::mail
