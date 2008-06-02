@@ -74,20 +74,29 @@ static bool mailbox_in_list(struct mailbox *box, char **list)
 
 bool mailbox_is_spam(struct mailbox *box)
 {
-	debug_verbose("mailbox_is_spam(%s)\n", mailbox_get_name(box));
-	return mailbox_in_list(box, spam_folders);
+	bool ret;
+
+	ret = mailbox_in_list(box, spam_folders);
+	debug_verbose("mailbox_is_spam(%s): %d\n", mailbox_get_name(box), ret);
+	return ret;
 }
 
 bool mailbox_is_trash(struct mailbox *box)
 {
-	debug_verbose("mailbox_is_trash(%s)\n", mailbox_get_name(box));
-	return mailbox_in_list(box, trash_folders);
+	bool ret;
+
+	ret = mailbox_in_list(box, trash_folders);
+	debug_verbose("mailbox_is_trash(%s): %d\n", mailbox_get_name(box), ret);
+	return ret;
 }
 
 bool mailbox_is_unsure(struct mailbox *box)
 {
-	debug_verbose("mailbox_is_unsure(%s)\n", mailbox_get_name(box));
-	return mailbox_in_list(box, unsure_folders);
+	bool ret;
+
+	ret = mailbox_in_list(box, unsure_folders);
+	debug_verbose("mailbox_is_unsure(%s): %d\n", mailbox_get_name(box), ret);
+	return ret;
 }
 
 bool keyword_is_spam(const char *keyword)
