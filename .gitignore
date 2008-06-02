@@ -3,6 +3,7 @@
 .config
 *~
 dovecot-version.h
+antispam-version.h
 dovecot-version
 *.log
 debian/dovecot-antispam-*/

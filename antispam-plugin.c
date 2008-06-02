@@ -32,7 +32,7 @@
 #include "str.h"
 #include "client.h"
 #include "mail-storage-private.h"
-
+#include "antispam-version.h"
 
 /* defined by imap, pop3, lda */
 extern void (*hook_mail_storage_created)(struct mail_storage *storage);
@@ -127,7 +127,7 @@ void PLUGIN_FUNCTION(init)(void)
 	char * const *iter;
 	int spam_folder_count = 0;
 
-	debug("plugin initialising\n");
+	debug("plugin initialising (%s)\n", ANTISPAM_GIT_VERSION);
 
 	global_pool = pool_alloconly_create("antispam-pool", 1024);
 

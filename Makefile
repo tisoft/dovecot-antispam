@@ -65,7 +65,7 @@ all: verify_config $(LIBRARY_NAME)
 antispam-storage.o: antispam-storage.c antispam-storage-*.c $(CONFIG) antispam-plugin.h dovecot-version.h
 	$(CC) -c $(CFLAGS) $(INCS) -o $@ $<
 
-%.o:	%.c $(CONFIG) antispam-plugin.h dovecot-version.h
+%.o:	%.c $(CONFIG) antispam-plugin.h dovecot-version.h antispam-version.h
 	$(CC) -c $(CFLAGS) $(INCS) -o $@ $<
 
 $(LIBRARY_NAME): $(objs)
@@ -77,8 +77,11 @@ dovecot-version: dovecot-version.c $(CONFIG)
 dovecot-version.h: dovecot-version
 	./dovecot-version > dovecot-version.h
 
+antispam-version.h: git-version.sh
+	./git-version.sh > antispam-version.h
+
 clean:
-	rm -f *.so *.o *~ dovecot-version dovecot-version.h
+	rm -f *.so *.o *~ dovecot-version dovecot-version.h antispam-version.h
 
 install: all
 	install -o $(USER) -g $(GROUP) -m 0660 $(LIBRARY_NAME) $(INSTALLDIR)/
