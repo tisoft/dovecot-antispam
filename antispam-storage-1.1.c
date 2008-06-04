@@ -172,11 +172,13 @@ static int antispam_save_finish(struct mail_save_context *ctx)
 		ANTISPAM_CONTEXT(ctx->transaction->box);
 	struct antispam_internal_context *ast =
 		ANTISPAM_CONTEXT(ctx->transaction);
-	struct mail *dest_mail = ast->mail;
+	struct mail *dest_mail;
 	int ret;
 
 	if (asbox->module_ctx.super.save_finish(ctx) < 0)
 		return -1;
+
+	dest_mail = ctx->dest_mail ? : ast->mail;
 
 	asbox->save_hack = TRUE;
 
