@@ -153,6 +153,7 @@ static int antispam_save_init(struct mailbox_transaction_context *t,
 {
 	struct antispam_internal_context *ast = ANTISPAM_CONTEXT(t);
 	struct antispam_mailbox *asbox = ANTISPAM_CONTEXT(t->box);
+	int ret;
 
 	if (!dest_mail) {
 		if (!ast->mail)
@@ -161,9 +162,13 @@ static int antispam_save_init(struct mailbox_transaction_context *t,
 					       NULL);
 		dest_mail = ast->mail;
 	}
-	return asbox->module_ctx.super.save_init(t, flags, keywords, received_date,
+	ret = asbox->module_ctx.super.save_init;(t, flags, keywords, received_date,
 				      timezone_offset, from_envelope,
 				      input, dest_mail, ctx_r);
+
+	(*ctx_r)->dest_mail = dest_mail;
+
+	return ret;
 }
 
 static int antispam_save_finish(struct mail_save_context *ctx)
