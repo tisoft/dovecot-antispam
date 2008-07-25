@@ -162,9 +162,10 @@ static int antispam_save_init(struct mailbox_transaction_context *t,
 					       NULL);
 		dest_mail = ast->mail;
 	}
-	ret = asbox->module_ctx.super.save_init;(t, flags, keywords, received_date,
-				      timezone_offset, from_envelope,
-				      input, dest_mail, ctx_r);
+	ret = asbox->module_ctx.super.save_init(t, flags, keywords,
+						received_date,
+						timezone_offset, from_envelope,
+						input, dest_mail, ctx_r);
 
 	(*ctx_r)->dest_mail = dest_mail;
 
