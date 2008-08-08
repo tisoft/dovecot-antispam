@@ -23,7 +23,7 @@ INST-mailtrain=$(CURDIR)/debian/dovecot-antispam-mailtrain/usr/lib/dovecot/modul
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
-	cp defconfig .config
+	cat defconfig | grep -v PLUGINNAME > .config
 
 	touch configure-stamp
 
@@ -33,9 +33,9 @@ build: build-arch
 
 build-arch: build-arch-stamp
 build-arch-stamp: configure-stamp  
-	LIBRARY_NAME=crm114.so BACKEND=crm114-exec $(MAKE)
-	LIBRARY_NAME=dspam.so BACKEND=dspam-exec $(MAKE)
-	LIBRARY_NAME=mailtrain.so BACKEND=mailtrain $(MAKE)
+	LIBRARY_NAME=crm114.so BACKEND=crm114-exec PLUGINNAME=crm114 $(MAKE)
+	LIBRARY_NAME=dspam.so BACKEND=dspam-exec PLUGINNAME=dspam $(MAKE)
+	LIBRARY_NAME=mailtrain.so BACKEND=mailtrain PLUGINNAME=mailtrain $(MAKE)
 
 clean: 
 	dh_testdir
@@ -56,11 +56,11 @@ install-arch:
 	dh_installdirs -s
 
 	mkdir -p $(INST-crm114)
-	install -o root -g root -m 0660 crm114.so $(INST-crm114)/lib90_antispam_plugin.so
+	install -o root -g root -m 0660 crm114.so $(INST-crm114)/lib90_crm114_plugin.so
 	mkdir -p $(INST-dspam)
-	install -o root -g root -m 0660 dspam.so $(INST-dspam)/lib90_antispam_plugin.so
+	install -o root -g root -m 0660 dspam.so $(INST-dspam)/lib90_dspam_plugin.so
 	mkdir -p $(INST-mailtrain)
-	install -o root -g root -m 0660 mailtrain.so $(INST-mailtrain)/lib90_antispam_plugin.so
+	install -o root -g root -m 0660 mailtrain.so $(INST-mailtrain)/lib90_mailtrain_plugin.so
 
 	dh_install -s
 # Must not depend on anything. This is to be called by
