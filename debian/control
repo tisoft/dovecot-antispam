@@ -8,7 +8,7 @@ Homepage: http://johannes.sipsolutions.net/Projects/dovecot-antispam
 
 Package: dovecot-antispam-crm114
 Architecture: any
-Depends: dovecot-imapd, ${shlibs:Depends}
+Depends: dovecot-imapd (= ${dovecot-dev}), ${shlibs:Depends}
 Provides: dovecot-antispam
 Conflicts: dovecot-antispam
 Description: Dovecot IMAP server antispam plugin
@@ -20,7 +20,7 @@ Tag: mail::imap, works-with::mail
 
 Package: dovecot-antispam-dspam
 Architecture: any
-Depends: dovecot-imapd, ${shlibs:Depends}
+Depends: dovecot-imapd (= ${dovecot-dev}), ${shlibs:Depends}
 Provides: dovecot-antispam
 Conflicts: dovecot-antispam
 Description: Dovecot IMAP server antispam plugin
@@ -32,7 +32,7 @@ Tag: mail::imap, works-with::mail
 
 Package: dovecot-antispam-mailtrain
 Architecture: any
-Depends: dovecot-imapd, ${shlibs:Depends}
+Depends: dovecot-imapd (= ${dovecot-dev}), ${shlibs:Depends}
 Provides: dovecot-antispam
 Conflicts: dovecot-antispam
 Description: Dovecot IMAP server antispam plugin

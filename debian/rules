@@ -80,6 +80,9 @@ binary-common:
 	dh_makeshlibs
 	dh_installdeb
 	dh_shlibdeps
+	@dpkg-query -W dovecot-dev | sed 's/\t/=/' >> debian/dovecot-antispam-dspam.substvars
+	@dpkg-query -W dovecot-dev | sed 's/\t/=/' >> debian/dovecot-antispam-crm114.substvars
+	@dpkg-query -W dovecot-dev | sed 's/\t/=/' >> debian/dovecot-antispam-mailtrain.substvars
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
