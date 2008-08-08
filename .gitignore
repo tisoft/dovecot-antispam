@@ -8,3 +8,5 @@ dovecot-version
 *.log
 debian/dovecot-antispam-*/
 debian/files
+*substvars
+configure-stamp
