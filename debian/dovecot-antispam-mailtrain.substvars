@@ -1,2 +1,0 @@
-shlibs:Depends=libc6 (>= 2.7-1)
-dovecot-dev=1:1.0.15-2
