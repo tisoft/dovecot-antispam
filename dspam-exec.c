@@ -130,19 +130,20 @@ static int call_dspam(const char *signature, enum classification wanted)
 		argv[2] = (char *)class_arg;
 		argv[3] = (char *)sign_arg;
 
+		for (i = 0; i < extra_args_num; i++)
+			argv[i + 4] = (char *)extra_args[i];
+
 #ifdef DEBUG_SYSLOG
 		/*
 		 * not good with stderr debuggin since we then write to
 		 * stderr which our parent takes as a bug
 		 */
-		debug("%s --source=error %s %s ...",
-		      dspam_binary, class_arg, sign_arg);
+		debugv(argv);
 #endif
 
-		for (i = 0; i < extra_args_num; i++)
-			argv[i + 4] = (char *)extra_args[i];
-
 		execv(dspam_binary, argv);
+		debug("executing %s failed: %d (uid=%d, gid=%d)",
+			dspam_binary, errno, getuid(), getgid());
 		/* fall through if dspam can't be found */
 		exit(127);
 		/* not reached */

@@ -46,9 +46,13 @@ int backend_commit(struct mailbox_transaction_context *ctx,
 
 #ifdef CONFIG_DEBUG
 void debug(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+void debugv(char **args);
 #else
 static void debug(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 static inline void debug(const char *fmt __attribute__((unused)), ...)
+{
+}
+static inline void debugv(char **args __attribute__((unused)))
 {
 }
 #endif

@@ -31,3 +31,34 @@ void debug(const char *fmt, ...)
 	_debug(fmt, args);
 	va_end(args);
 }
+
+void debugv(char **args)
+{
+	size_t len, pos, buflen = 1024;
+	char *buf;
+	const char *str;
+
+	t_push();
+	buf = t_buffer_get(buflen);
+
+	while (1) {
+		str = *args;
+		if (!str)
+			break;
+		len = strlen(str);
+		if (pos + len + 1 >= buflen) {
+			buflen = nearest_power(pos + len + 2);
+			buf = t_buffer_reget(buf, buflen);
+		}
+
+		memcpy(buf + pos, str, len);
+		pos += len;
+		buf[pos++] = ' ';
+		args++;
+	}
+
+	buf[pos++] = '\0';
+
+	debug(stringify(PLUGINNAME) ": %s", buf);
+	t_pop();
+}

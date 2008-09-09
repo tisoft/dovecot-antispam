@@ -111,13 +111,15 @@ static int call_reaver(const char *signature, enum classification wanted)
 		argv[0] = (char *)reaver_binary;
 		argv[1] = (char *)class_arg;
 
-		debug("%s %s ...", reaver_binary, class_arg);
-
 		for (i = 0; i < extra_args_num; i++)
 			argv[i + FIXED_ARGS_NUM] = (char *)extra_args[i];
 
+		debugv(argv);
+
 		execv(reaver_binary, argv);
 		/* fall through if reaver can't be found */
+                debug("executing %s failed: %d (uid=%d, gid=%d)",
+			reaver_binary, errno, getuid(), getgid());
 		exit(127);
 		/* not reached */
 		return -1;
