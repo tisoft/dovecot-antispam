@@ -77,8 +77,8 @@ dovecot-version: dovecot-version.c $(CONFIG)
 dovecot-version.h: dovecot-version
 	./dovecot-version > dovecot-version.h
 
-antispam-version.h: git-version.sh
-	./git-version.sh > antispam-version.h
+antispam-version.h: version.sh
+	./version.sh > antispam-version.h
 
 clean:
 	rm -f *.so *.o *~ dovecot-version dovecot-version.h antispam-version.h

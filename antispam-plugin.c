@@ -136,7 +136,7 @@ void PLUGIN_FUNCTION(init)(void)
 	char * const *iter;
 	int spam_folder_count = 0;
 
-	debug("plugin initialising (%s)\n", ANTISPAM_GIT_VERSION);
+	debug("plugin initialising (%s)\n", ANTISPAM_VERSION);
 
 	global_pool = pool_alloconly_create("antispam-pool", 1024);
 
