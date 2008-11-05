@@ -26,9 +26,11 @@ LIBRARY_NAME ?= lib90_$(PLUGINNAME)_plugin.so
 ifeq ("$(DEBUG)", "stderr")
 CFLAGS += -DCONFIG_DEBUG -DDEBUG_STDERR
 objs += debug.o
-else ifeq ("$(DEBUG)", "syslog")
+else 
+ifeq ("$(DEBUG)", "syslog")
 CFLAGS += -DCONFIG_DEBUG -DDEBUG_SYSLOG
 objs += debug.o
+endif
 endif
 
 ifeq ("$(DEBUG_VERBOSE)", "1")
@@ -84,7 +86,7 @@ clean:
 	rm -f *.so *.o *~ dovecot-version dovecot-version.h antispam-version.h
 
 install: all
-	install -o $(USER) -g $(GROUP) -m 0660 $(LIBRARY_NAME) $(INSTALLDIR)/
+	install -o $(USER) -g $(GROUP) -m 0755 $(LIBRARY_NAME) $(INSTALLDIR)/
 
 verify_config:
 	@if [ ! -r $(CONFIG) ]; then \
