@@ -1,6 +1,6 @@
 #!/bin/sh
 
-VERSION=1.0
+VERSION=1.1
 
 if head=$(git rev-parse --verify HEAD 2>/dev/null); then
 	git update-index --refresh --unmerged > /dev/null
