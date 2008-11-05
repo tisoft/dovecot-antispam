@@ -34,7 +34,7 @@ void debug(const char *fmt, ...)
 
 void debugv(char **args)
 {
-	size_t len, pos, buflen = 1024;
+	size_t len, pos = 0, buflen = 1024;
 	char *buf;
 	const char *str;
 
@@ -59,6 +59,8 @@ void debugv(char **args)
 
 	buf[pos++] = '\0';
 
-	debug(stringify(PLUGINNAME) ": %s", buf);
+	t_buffer_alloc(pos);
+
+	debug("%s", buf);
 	t_pop();
 }
