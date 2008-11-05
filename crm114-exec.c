@@ -33,8 +33,6 @@ static const char *reaver_binary = "/bin/false";
 static char **extra_args = NULL;
 static int extra_args_num = 0;
 
-#define FIXED_ARGS_NUM 2
-
 static int call_reaver(const char *signature, enum classification wanted)
 {
 	pid_t pid;
@@ -86,7 +84,8 @@ static int call_reaver(const char *signature, enum classification wanted)
 	} else {
 		int fd = open("/dev/null", O_RDONLY);
 		char **argv;
-		int sz = sizeof(char *) * (FIXED_ARGS_NUM + extra_args_num + 1);
+		/* 2 fixed, extra, terminating NULL */
+		int sz = sizeof(char *) * (2 + extra_args_num + 1);
 		int i;
 
 		argv = i_malloc(sz);
@@ -112,7 +111,7 @@ static int call_reaver(const char *signature, enum classification wanted)
 		argv[1] = (char *)class_arg;
 
 		for (i = 0; i < extra_args_num; i++)
-			argv[i + FIXED_ARGS_NUM] = (char *)extra_args[i];
+			argv[i + 2] = (char *)extra_args[i];
 
 		debugv(argv);
 

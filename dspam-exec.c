@@ -33,8 +33,6 @@ static const char *dspam_binary = "/usr/bin/dspam";
 static char **extra_args = NULL;
 static int extra_args_num = 0;
 
-#define FIXED_ARGS_NUM 5
-
 static int call_dspam(const char *signature, enum classification wanted)
 {
 	pid_t pid;
@@ -103,7 +101,8 @@ static int call_dspam(const char *signature, enum classification wanted)
 	} else {
 		int fd = open("/dev/null", O_RDONLY);
 		char **argv;
-		int sz = sizeof(char *) * (FIXED_ARGS_NUM + extra_args_num);
+		/* 4 fixed args, extra args, terminating NULL */
+		int sz = sizeof(char *) * (4 + extra_args_num + 1);
 		int i;
 
 		argv = i_malloc(sz);
