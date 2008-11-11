@@ -63,14 +63,14 @@ static int call_dspam(const char *signature, enum classification wanted)
 
 	if (pid) {
 		int status;
-		char buf[1024];
+		char buf[1025];
 		int readsize;
 		bool error = FALSE;
 
 		close(pipes[1]);
 
 		do {
-			readsize = read(pipes[0], buf, sizeof(buf));
+			readsize = read(pipes[0], buf, sizeof(buf) - 1);
 			if (readsize < 0) {
 				readsize = -1;
 				if (errno == EINTR)
@@ -84,6 +84,11 @@ static int call_dspam(const char *signature, enum classification wanted)
 			 */
 			if (readsize > 0 || readsize == -1)
 				error = TRUE;
+
+			if (readsize > 0) {
+				buf[readsize] = '\0';
+				debug("dspam error: %s\n", buf);
+			}
 		} while (readsize == -2 || readsize > 0);
 
 		/*
