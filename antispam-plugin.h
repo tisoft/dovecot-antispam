@@ -5,6 +5,7 @@
 #include "str.h"
 #include "client.h"
 #include "ostream.h"
+#include "dict.h"
 #include "imap-search.h"
 #include "dovecot-version.h"
 
@@ -111,6 +112,12 @@ o_stream_create_from_fd(int fd, pool_t pool ATTR_UNUSED)
 {
 	return o_stream_create_fd(fd, 0, TRUE);
 }
+
+static inline struct dict *
+string_dict_init(const char *uri, const char *username)
+{
+	return dict_init(uri, DICT_DATA_TYPE_STRING, username);
+}
 #elif DOVECOT_VERSION_CODE(1, 0) == DOVECOT_VERSION
 #define ME(err)
 #define PLUGIN_ID
@@ -132,6 +139,12 @@ static inline struct ostream *
 o_stream_create_from_fd(int fd, pool_t pool)
 {
 	return o_stream_create_file(fd, pool, 0, TRUE);
+}
+
+static inline struct dict *
+string_dict_init(const char *uri, const char *username)
+{
+	return dict_init(uri, username);
 }
 #else
 #error "Building against this dovecot version is not supported"

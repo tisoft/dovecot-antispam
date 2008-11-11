@@ -51,7 +51,7 @@ backend_start(struct mailbox *box __attr_unused__)
 
 	ast = i_new(struct antispam_transaction_context, 1);
 
-	ast->dict = dict_init(dict_uri, dict_user);
+	ast->dict = string_dict_init(dict_uri, dict_user);
 
 	/* see comment below */
 //	if (ast->dict)
@@ -94,6 +94,7 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 
 	if (!ast->dict) {
 		mail_storage_set_error(t->box->storage,
+				       ME(NOTPOSSIBLE)
 				       "Failed to initialise dict connection");
 		return -1;
 	}
@@ -125,6 +126,7 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 	ret = dict_transaction_commit(ast->dict_ctx);
 	if (ret)
 		mail_storage_set_error(t->box->storage,
+				       ME(NOTPOSSIBLE)
 				       "Failed to count signature");
 
 	return ret;
