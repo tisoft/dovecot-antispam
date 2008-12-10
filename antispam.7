@@ -146,6 +146,13 @@ plugin {
     # antispam_dspam_args = --deliver=;--user;%u  # % expansion done by dovecot
     # antispam_dspam_args = --mode=teft
 
+    # Ignore mails where the DSPAM result header contains any of the
+    # strings listed in the blacklist
+    # (default unset i.e. none)
+    # antispam_dspam_result_header = X-DSPAM-Result
+    # semicolon-separated list of blacklisted results, case insensitive
+    # antispam_dspam_result_blacklist = Virus
+
     #=====================
     # mail sending plugin
     #

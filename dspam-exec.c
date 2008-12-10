@@ -30,6 +30,9 @@
 #include "signature.h"
 
 static const char *dspam_binary = "/usr/bin/dspam";
+static const char *dspam_result_header = NULL;
+static char **dspam_result_bl = NULL;
+static int dspam_result_bl_num = 0;
 static char **extra_args = NULL;
 static int extra_args_num = 0;
 
@@ -201,6 +204,22 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 			struct antispam_transaction_context *ast,
 			struct mail *mail, enum classification want)
 {
+	const char *const *result = NULL;
+	int i;
+
+	/*
+	 * Check for whitelisted classifications that should
+	 * be ignored when moving a mail. eg. virus.
+	 */
+	if (dspam_result_header)
+		result = get_mail_headers(mail, dspam_result_header);
+	if (result && result[0]) {
+		for (i = 0; i < dspam_result_bl_num; i++) {
+			if (strcasecmp(result[0], dspam_result_bl[i]) == 0)
+				return 0;
+		}
+	}
+
 	return signature_extract_to_list(t, mail, &ast->siglist, want);
 }
 
@@ -213,6 +232,22 @@ void backend_init(pool_t pool)
 	if (tmp)
 		dspam_binary = tmp;
 	debug("dspam binary set to %s\n", dspam_binary);
+
+	tmp = get_setting("DSPAM_RESULT_HEADER");
+	if (tmp) {
+		dspam_result_header = tmp;
+		debug("dspam result set to %s\n", dspam_result_header);
+
+		tmp = get_setting("DSPAM_RESULT_BLACKLIST");
+		if (tmp) {
+			dspam_result_bl = p_strsplit(pool, tmp, ";");
+			dspam_result_bl_num = str_array_length(
+					(const char *const *)dspam_result_bl);
+			for (i = 0; i < dspam_result_bl_num; i++)
+				debug("dspam result blacklist %s\n",
+						dspam_result_bl[i]);
+		}
+	}
 
 	tmp = get_setting("DSPAM_ARGS");
 	if (tmp) {
