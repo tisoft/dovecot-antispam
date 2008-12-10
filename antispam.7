@@ -108,6 +108,13 @@ plugin {
     # mail signature (used with any backend requiring a signature)
     antispam_signature = X-DSPAM-Signature
 
+    # action to take on mails without signature
+    # (used with any backend requiring a signature)
+    # (we recommend only setting this to 'move' after verifying that the
+    # whole setup is working)
+    # antispam_signature_missing = move # move silently without training
+    antispam_signature_missing = error
+
     # semicolon-separated list of Trash folders (default unset i.e. none)
     # antispam_trash =
     # antispam_trash = trash;Trash;Deleted Items

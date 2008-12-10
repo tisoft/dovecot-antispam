@@ -99,7 +99,12 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 		return -1;
 	}
 
-	signature = signature_extract(t, mail);
+	ret = signature_extract(t, mail, &signature);
+	if (ret)
+		return ret;
+
+	if (!signature)
+		return 0;
 
 	switch (wanted) {
 	case CLASS_SPAM:

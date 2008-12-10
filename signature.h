@@ -16,8 +16,8 @@ void signature_init(void);
 int signature_extract_to_list(struct mailbox_transaction_context *t,
 			      struct mail *mail, struct siglist **list,
 			      enum classification wanted);
-const char *signature_extract(struct mailbox_transaction_context *t,
-			      struct mail *mail);
+int signature_extract(struct mailbox_transaction_context *t,
+		      struct mail *mail, const char **signature);
 void signature_list_free(struct siglist **list);
 
 extern const char *signature_hdr;
