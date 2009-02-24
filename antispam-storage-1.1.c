@@ -167,7 +167,8 @@ static int antispam_save_init(struct mailbox_transaction_context *t,
 						timezone_offset, from_envelope,
 						input, dest_mail, ctx_r);
 
-	(*ctx_r)->dest_mail = dest_mail;
+	if (ret >= 0)
+		(*ctx_r)->dest_mail = dest_mail;
 
 	return ret;
 }
