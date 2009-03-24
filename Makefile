@@ -86,7 +86,7 @@ clean:
 	rm -f *.so *.o *~ dovecot-version dovecot-version.h antispam-version.h
 
 install: all
-	install -o $(USER) -g $(GROUP) -m 0755 $(LIBRARY_NAME) $(INSTALLDIR)/
+	install -o $(USER) -g $(GROUP) -m 0755 $(LIBRARY_NAME) $(DESTDIR)$(INSTALLDIR)/
 
 verify_config:
 	@if [ ! -r $(CONFIG) ]; then \
