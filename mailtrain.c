@@ -288,7 +288,7 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 	if (memcmp("From ", beginning, 5) == 0) {
 		i_stream_read_next_line(mailstream);
 	} else {
-		if (o_stream_send_str(outstream, "From ") < 0) {
+		if (o_stream_send(outstream, beginning, 5) != 5) {
 			ret = -1;
 			mail_storage_set_error(t->box->storage,
 					       ME(NOTPOSSIBLE)
