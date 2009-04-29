@@ -84,7 +84,7 @@ extern bool need_folder_hook;
  * Dovecot version compat code
  */
 
-#if DOVECOT_VERSION_CODE(1, 1) == DOVECOT_VERSION
+#if DOVECOT_VERSION_CODE(1, 1) == DOVECOT_VERSION || DOVECOT_VERSION_CODE(1, 2) == DOVECOT_VERSION
 #define __attr_unused__		ATTR_UNUSED
 #define ME(err)			MAIL_ERROR_ ##err,
 #define PLUGIN_ID		uint32_t PLUGIN_FUNCTION(id) = 0

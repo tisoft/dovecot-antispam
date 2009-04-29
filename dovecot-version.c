@@ -8,7 +8,7 @@ int main(int argc, char **argv)
 	char *v = PACKAGE_STRING, *e;
 	int maj = 0, min = 0;
 
-	if (strncmp(v, "dovecot ", 8))
+	if (strncmp(v, "dovecot ", 8) && strncmp(v, "Dovecot ", 8))
 		return 1;
 
 	/* skip "dovecot " */
