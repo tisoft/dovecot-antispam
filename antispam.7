@@ -94,6 +94,11 @@ into a spam folder and other mail regularly.
 
 Has the same drawbacks as the dspam-exec approach.
 
+.SS spool2dir backend (general)
+
+This backend spools the message into a file. No further processing
+is performed. You need to write an extra daemon that picks up the
+spooled files and trains the spam filter as appropriate.
 
 .SH CONFIGURATION
 
@@ -194,6 +199,17 @@ plugin {
 
     # NOTE: you need to set the signature for this backend
     antispam_signature = X-CRM114-CacheID
+
+    #===================
+    # spool2dir plugin
+
+	# spam/not-spam spool2dir drop (default unset which will give errors)
+	# The first %%lu is replaced by the current time.
+	# The second %%lu is replaced by a counter to generate unique names.
+	# These two tokens MUST be present in the template! However
+	# you can insert any C-style modifier as shown.
+	# antispam_spool2dir_spam    = /tmp/spamspool/%%020lu-%u-%%05lus
+	# antispam_spool2dir_notspam = /tmp/spamspool/%%020lu-%u-%%05luh
 }
 .fi
 

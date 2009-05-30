@@ -14,10 +14,12 @@
 #  signature-log	- signature logging using dovecot's dict API
 #  mailtrain		- send mail to special addresses for training
 #  crm114-exec		- direct crm114 training by calling mailreaver.crm
+#  spool2dir		- spool trained emails to a directory
 #BACKEND=dspam-exec
 #BACKEND=signature-log
 #BACKEND=mailtrain
 #BACKEND=crm114-exec
+#BACKEND=spool2dir
 
 # Dovecot build/header directory
 # Building the plugin requires configured dovecot sources or having
