@@ -98,7 +98,8 @@ Has the same drawbacks as the dspam-exec approach.
 
 This backend spools the message into a file. No further processing
 is performed. You need to write an extra daemon that picks up the
-spooled files and trains the spam filter as appropriate.
+spooled files and trains the spam filter as appropriate. You can,
+for example, use incron to pick up new emails.
 
 .SH CONFIGURATION
 
