@@ -26,6 +26,7 @@
  */
 
 #include <stdlib.h>
+#include <ctype.h>
 
 /* dovecot headers we need */
 #include "lib.h"
@@ -44,29 +45,148 @@ extern void (*hook_mail_storage_created)(struct mail_storage *storage);
 PLUGIN_ID;
 
 static pool_t global_pool;
-static char **trash_folders = NULL;
+
 static char *default_spam_folders[] = {
 	"SPAM",
 	NULL
 };
-static char **spam_folders = default_spam_folders;
-static char **unsure_folders = NULL;
+
+enum match_type {
+	MT_REG,
+	MT_PATTERN,
+	MT_PATTERN_IGNCASE,
+
+	/* keep last */
+	NUM_MT
+};
+
+/*
+ * There are three different matches for each folder type
+ *
+ * type			usage
+ * ----------------------------
+ * MT_REG		plain strcmp()
+ * MT_PATTERN		case sensitive match with possible wildcards
+ * MT_PATTERN_IGNCASE	case insensitive match with possible wildcards
+ */
+static char **trash_folders[]  = { NULL,		NULL, NULL };
+static char **spam_folders[]   = { default_spam_folders,NULL, NULL };
+static char **unsure_folders[] = { NULL,		NULL, NULL };
+
+/* display name of kind of pattern match'ing same order as above */
+static const struct {
+	const char *human, *suffix;
+} pmatch_name[NUM_MT] = {
+	[MT_REG]		= { .human  = "exact match",
+				    .suffix = "" },
+	[MT_PATTERN]		= { .human  = "wildcard match",
+				    .suffix = "_PATTERN" },
+	[MT_PATTERN_IGNCASE]	= { .human  = "case-insensitive wildcard match",
+				    .suffix = "_PATTERN_IGNORECASE" },
+};
+
 bool antispam_can_append_to_spam = FALSE;
 static char **spam_keywords = NULL;
 
 bool need_keyword_hook;
 bool need_folder_hook;
 
-
-static bool mailbox_in_list(struct mailbox *box, char **list)
+/* lower-case string, but keep modified UTF7 unchanged */
+void lowercase_string(const char *in, char *out)
 {
-	if (!list)
+	char ch;
+
+	while ((ch = *out++ = i_tolower(*in++))) {
+		/* lower case */
+		if (ch == '&') {
+			/* modified UTF7 -- find end of sequence ('-') */
+			while ((ch = *out++ = *in++)) {
+				if (ch == '-')
+					break;
+			}
+		}
+	}
+}
+
+static bool mailbox_patternmatch(struct mailbox *box,
+				 struct mail_storage *storage,
+				 const char *name,
+				 bool lowercase)
+{
+	const char *boxname;
+	char *lowerboxname;
+	int len;
+	int rc;
+
+	if (storage && mailbox_get_storage(box) != storage)
 		return FALSE;
 
-	while (*list) {
-		if (mailbox_equals(box, box->storage, *list))
-			return TRUE;
-		list++;
+	t_push();
+
+	boxname = mailbox_get_name(box);
+	if (lowercase) {
+		lowerboxname = t_buffer_get(strlen(boxname) + 1);
+		lowercase_string(boxname, lowerboxname);
+		boxname = lowerboxname;
+	}
+
+	len = strlen(name);
+	if (len && name[len - 1] == '*') {
+		/* any wildcard */
+		--len;
+	} else {
+		/* compare EOS too */
+		++len;
+	}
+
+	rc = memcmp(name, boxname, len) == 0;
+
+	t_pop();
+
+	return rc;
+}
+
+static bool mailbox_patternmatch_case(struct mailbox *box,
+				      struct mail_storage *storage,
+				      const char *name)
+{
+	return mailbox_patternmatch(box, storage, name, FALSE);
+}
+
+static bool mailbox_patternmatch_icase(struct mailbox *box,
+				       struct mail_storage *storage,
+				       const char *name)
+{
+	return mailbox_patternmatch(box, storage, name, TRUE);
+}
+
+typedef bool (*match_fn_t)(struct mailbox *, struct mail_storage *,
+			   const char *);
+
+static const match_fn_t match_fns[NUM_MT] = {
+	[MT_REG]		= mailbox_equals,
+	[MT_PATTERN]		= mailbox_patternmatch_case,
+	[MT_PATTERN_IGNCASE]	= mailbox_patternmatch_icase,
+};
+
+static bool mailbox_in_list(struct mailbox *box, char ***patterns)
+{
+	enum match_type i;
+	char **list;
+
+	if (!patterns)
+		return FALSE;
+
+	for (i = 0; i < NUM_MT; i++) {
+		list = patterns[i];
+		if (!list)
+			continue;
+
+		while (*list) {
+			if (match_fns[i](box, box->storage, *list))
+				return TRUE;
+			list++;
+		}
 	}
 
 	return FALSE;
@@ -130,55 +250,62 @@ const char *get_setting(const char *name)
 	return env;
 }
 
+int parse_folder_setting(const char *setting, char ***strings,
+			 const char *display_name)
+{
+	const char *tmp;
+	int cnt = 0;
+	enum match_type i;
+
+	t_push();
+
+	for (i = 0; i <= NUM_MT; ++i) {
+		tmp = get_setting(t_strconcat(setting, pmatch_name[i].suffix,
+				  NULL));
+		if (tmp) {
+			strings[i] = p_strsplit(global_pool, tmp, ";");
+			if (i == 2) {
+				/* lower case the string */
+				char **list = strings[i];
+				while (*list) {
+					lowercase_string(*list, *list);
+					++list;
+				}
+			}
+		}
+
+		if (strings[i]) {
+			char **iter = strings[i];
+			while (*iter) {
+				++cnt;
+				debug("\"%s\" is %s %s folder\n", *iter,
+					pmatch_name[i].human, display_name);
+				iter++;
+			}
+		}
+	}
+
+	t_pop();
+
+	if (!cnt)
+		debug("no %s folders\n", display_name);
+
+	return cnt;
+}
+
 void PLUGIN_FUNCTION(init)(void)
 {
 	const char *tmp;
 	char * const *iter;
-	int spam_folder_count = 0;
+	int spam_folder_count;
 
 	debug("plugin initialising (%s)\n", ANTISPAM_VERSION);
 
 	global_pool = pool_alloconly_create("antispam-pool", 1024);
 
-	tmp = get_setting("TRASH");
-	if (tmp)
-		trash_folders = p_strsplit(global_pool, tmp, ";");
-
-	if (trash_folders) {
-		iter = trash_folders;
-		while (*iter) {
-			debug("\"%s\" is trash folder\n", *iter);
-			iter++;
-		}
-	} else
-		debug("no trash folders\n");
-
-	tmp = get_setting("SPAM");
-	if (tmp)
-		spam_folders = p_strsplit(global_pool, tmp, ";");
-
-	if (spam_folders) {
-		iter = spam_folders;
-		while (*iter) {
-			debug("\"%s\" is spam folder\n", *iter);
-			iter++;
-			spam_folder_count++;
-		}
-	} else
-		debug("no spam folders\n");
-
-	tmp = get_setting("UNSURE");
-	if (tmp)
-		unsure_folders = p_strsplit(global_pool, tmp, ";");
-
-	if (unsure_folders) {
-		iter = unsure_folders;
-		while (*iter) {
-			debug("\"%s\" is unsure folder\n", *iter);
-			iter++;
-		}
-	} else
-		debug("no unsure folders\n");
+	parse_folder_setting("TRASH", trash_folders, "trash");
+	spam_folder_count = parse_folder_setting("SPAM", spam_folders, "spam");
+	parse_folder_setting("UNSURE", unsure_folders, "unsure");
 
 	tmp = get_setting("ALLOW_APPEND_TO_SPAM");
 	if (tmp && strcasecmp(tmp, "yes") == 0) {

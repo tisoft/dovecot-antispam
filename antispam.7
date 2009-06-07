@@ -121,15 +121,44 @@ plugin {
     # antispam_signature_missing = move # move silently without training
     antispam_signature_missing = error
 
+    # The list of folders for trash, spam and unsure can be given
+    # with three options, e.g. "trash" matches the given folders
+    # exactly as written, "trash_pattern" accept the * wildcard at
+    # the end of the foldername, "trash_pattern_ignorecase"
+    # accepts the * wildcard at the end of the foldername _and_
+    # matches the name case insensitivly.
+
+    # the *-wildcard with the following meaning:
+    #    * at the end: any folder that _start_ with the string
+    # e.g.:
+    #	antispam_trash_pattern = deleted *;Gel&APY-schte *
+    # match any folders that start with "deleted " or "Gelöschte "
+    # match is _case_senstive_!
+    #
+    #	antispam_trash_pattern_ignorecase = deleted *;Gel&APY-schte *
+    # match any folders that start with "deleted " or "gelöschte "
+    # match is _case_insenstive_, except the non-USASCII letters,
+    # "ö" in this example.
+    # To match the upper-case Ö, too, you need to add yet another
+    # pattern "gel&ANY-schte *", note the different UTF7 encoding:
+    # &ANY- instead of &APY-.
+
+
     # semicolon-separated list of Trash folders (default unset i.e. none)
     # antispam_trash =
-    # antispam_trash = trash;Trash;Deleted Items
+    # antispam_trash = trash;Trash;Deleted Items; Deleted Messages
+    # antispam_trash_pattern = trash;Trash;Deleted *
+    # antispam_trash_pattern_ignorecase = trash;Deleted *
 
     # semicolon-separated list of spam folders
     antispam_spam = SPAM
+    # antispam_spam_pattern = SPAM
+    # antispam_spam_pattern_ignorecase = SPAM
 
     # semicolon-separated list of unsure folders (default unset i.e. none)
     # antispam_unsure =
+    # antispam_unsure_pattern =
+    # antispam_unsure_pattern_ignorecase =
 
     # Whether to allow APPENDing to SPAM folders or not. Must be set to
     # "yes" (case insensitive) to be activated. Before activating, please
