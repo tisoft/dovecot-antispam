@@ -73,18 +73,6 @@ static char **trash_folders[]  = { NULL,		NULL, NULL };
 static char **spam_folders[]   = { default_spam_folders,NULL, NULL };
 static char **unsure_folders[] = { NULL,		NULL, NULL };
 
-/* display name of kind of pattern match'ing same order as above */
-static const struct {
-	const char *human, *suffix;
-} pmatch_name[NUM_MT] = {
-	[MT_REG]		= { .human  = "exact match",
-				    .suffix = "" },
-	[MT_PATTERN]		= { .human  = "wildcard match",
-				    .suffix = "_PATTERN" },
-	[MT_PATTERN_IGNCASE]	= { .human  = "case-insensitive wildcard match",
-				    .suffix = "_PATTERN_IGNORECASE" },
-};
-
 bool antispam_can_append_to_spam = FALSE;
 static char **spam_keywords = NULL;
 
@@ -163,10 +151,20 @@ static bool mailbox_patternmatch_icase(struct mailbox *box,
 typedef bool (*match_fn_t)(struct mailbox *, struct mail_storage *,
 			   const char *);
 
-static const match_fn_t match_fns[NUM_MT] = {
-	[MT_REG]		= mailbox_equals,
-	[MT_PATTERN]		= mailbox_patternmatch_case,
-	[MT_PATTERN_IGNCASE]	= mailbox_patternmatch_icase,
+/* match information */
+static const struct {
+	const char *human, *suffix;
+	match_fn_t fn;
+} match_info[NUM_MT] = {
+	[MT_REG]		= { .human  = "exact match",
+				    .suffix = "",
+				    .fn     = mailbox_equals, },
+	[MT_PATTERN]		= { .human  = "wildcard match",
+				    .suffix = "_PATTERN",
+				    .fn     = mailbox_patternmatch_case, },
+	[MT_PATTERN_IGNCASE]	= { .human  = "case-insensitive wildcard match",
+				    .suffix = "_PATTERN_IGNORECASE",
+				    .fn     = mailbox_patternmatch_icase, },
 };
 
 static bool mailbox_in_list(struct mailbox *box, char ***patterns)
@@ -183,7 +181,7 @@ static bool mailbox_in_list(struct mailbox *box, char ***patterns)
 			continue;
 
 		while (*list) {
-			if (match_fns[i](box, box->storage, *list))
+			if (match_info[i].fn(box, box->storage, *list))
 				return TRUE;
 			list++;
 		}
@@ -260,7 +258,7 @@ int parse_folder_setting(const char *setting, char ***strings,
 	t_push();
 
 	for (i = 0; i < NUM_MT; ++i) {
-		tmp = get_setting(t_strconcat(setting, pmatch_name[i].suffix,
+		tmp = get_setting(t_strconcat(setting, match_info[i].suffix,
 				  NULL));
 		if (tmp) {
 			strings[i] = p_strsplit(global_pool, tmp, ";");
@@ -279,7 +277,7 @@ int parse_folder_setting(const char *setting, char ***strings,
 			while (*iter) {
 				++cnt;
 				debug("\"%s\" is %s %s folder\n", *iter,
-					pmatch_name[i].human, display_name);
+					match_info[i].human, display_name);
 				iter++;
 			}
 		}
