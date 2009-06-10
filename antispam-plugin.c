@@ -259,12 +259,12 @@ int parse_folder_setting(const char *setting, char ***strings,
 
 	t_push();
 
-	for (i = 0; i <= NUM_MT; ++i) {
+	for (i = 0; i < NUM_MT; ++i) {
 		tmp = get_setting(t_strconcat(setting, pmatch_name[i].suffix,
 				  NULL));
 		if (tmp) {
 			strings[i] = p_strsplit(global_pool, tmp, ";");
-			if (i == 2) {
+			if (i == MT_PATTERN_IGNCASE) {
 				/* lower case the string */
 				char **list = strings[i];
 				while (*list) {
