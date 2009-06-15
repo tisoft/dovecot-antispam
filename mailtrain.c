@@ -285,17 +285,8 @@ int backend_handle_mail(struct mailbox_transaction_context *t,
 	}
 
 	/* "From "? skip line */
-	if (memcmp("From ", beginning, 5) == 0) {
+	if (memcmp("From ", beginning, 5) == 0)
 		i_stream_read_next_line(mailstream);
-	} else {
-		if (o_stream_send(outstream, beginning, 5) != 5) {
-			ret = -1;
-			mail_storage_set_error(t->box->storage,
-					       ME(NOTPOSSIBLE)
-					       "Failed to write line to temp");
-			goto failed_to_copy;
-		}
-	}
 
 	if (o_stream_send_istream(outstream, mailstream) < 0) {
 		ret = -1;
