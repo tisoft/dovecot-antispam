@@ -3,7 +3,7 @@ Section: utils
 Priority: optional
 Maintainer: Jonny Lamb <jonny@debian.org>
 Build-Depends: debhelper (>= 5), dovecot-dev
-Standards-Version: 3.7.3
+Standards-Version: 3.8.2.0
 Homepage: http://johannes.sipsolutions.net/Projects/dovecot-antispam
 Vcs-Git: git://git.jonnylamb.com/git/packaging/dovecot-antispam.git
 Vcs-Browser: http://git.jonnylamb.com/?p=packaging/dovecot-antispam.git;a=summary
@@ -25,4 +25,5 @@ Description: a Dovecot plugin that helps train spam filters
  .
  Note that dovecot-antispam needs the type of spam filter configured at
  compile time.  It supports building with a custom name, specifically
- to allow installing multiple variations simultaneously.
+ to allow installing multiple variations simultaneously.  This package
+ is built to use the mailtrain backend.
