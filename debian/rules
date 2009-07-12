@@ -5,7 +5,7 @@ build: build-stamp
 build-stamp:
 	dh_testdir
 	cp debian/dovecot-antispam-config .config
-	$(MAKE) all
+	$(MAKE)
 	touch $@
 
 clean:
