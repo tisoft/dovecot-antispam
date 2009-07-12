@@ -19,7 +19,7 @@ clean:
 install: build
 	dh_testdir
 	dh_testroot
-	dh_clean -k 
+	dh_clean -k
 	dh_install lib90_antispam_plugin.so usr/lib/dovecot/modules/imap
 	cp -f antispam.7 dovecot-antispam.7
 	dh_installman dovecot-antispam.7
@@ -41,4 +41,4 @@ binary-arch: build install
 	dh_builddeb
 
 binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install 
+.PHONY: build clean binary-indep binary-arch binary install
