@@ -4,8 +4,7 @@ build: build-stamp
 
 build-stamp:
 	dh_testdir
-	cp $(CURDIR)/debian/dovecot-antispam-config $(CURDIR)/.config
-	-mv $(CURDIR)/antispam.7 $(CURDIR)/dovecot-antispam.7
+	cp debian/dovecot-antispam-config .config
 	$(MAKE) all
 	touch $@
 
@@ -14,29 +13,24 @@ clean:
 	dh_testroot
 	rm -f build-stamp
 	$(MAKE) clean	
-	rm -f $(CURDIR)/.config
-	-mv $(CURDIR)/dovecot-antispam.7 $(CURDIR)/antispam.7
+	$(RM) .config dovecot-antispam.7
 	dh_clean
 
 install: build
 	dh_testdir
 	dh_testroot
 	dh_clean -k 
-	dh_installdirs
-	mkdir -p $(CURDIR)/debian/dovecot-antispam/usr/lib/dovecot/modules/imap
-	cp $(CURDIR)/lib90_antispam_plugin.so \
-	    $(CURDIR)/debian/dovecot-antispam/usr/lib/dovecot/modules/imap/
+	dh_install lib90_antispam_plugin.so usr/lib/dovecot/modules/imap
+	cp -f antispam.7 dovecot-antispam.7
+	dh_installman dovecot-antispam.7
 
 binary-indep: build install
 
 binary-arch: build install
 	dh_testdir
 	dh_testroot
-	dh_installdocs README NOTES
-	dh_install
-	dh_installman dovecot-antispam.7
+	dh_installdocs
 	dh_installchangelogs
-	dh_link
 	dh_strip
 	dh_compress
 	dh_fixperms
