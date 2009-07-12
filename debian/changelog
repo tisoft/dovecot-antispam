@@ -1,3 +1,15 @@
+dovecot-antispam (1.2-0.1) unstable; urgency=low
+
+  * Non-maintainer upload.  (Pulling in new upstream source)
+  * Rebuild to suit dovecot 1.1.16 currently in unstable.
+  * Note in the description this package is built using the mailtrain backend.
+    half- Closes: #532605, it probably still would be nice to build for all of
+    the backends, but I only need this one too, so add others as people to test
+    them put their hands up.
+  * Tidy up a little in debian/rules.
+
+ -- Ron Lee <ron@debian.org>  Sun, 12 Jul 2009 21:19:58 +0930
+
 dovecot-antispam (1.1+20090218.git.g28075fa-2) unstable; urgency=low
 
   * debian/gbp.conf: Removed no-create-orig line.
