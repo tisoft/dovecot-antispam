@@ -1,0 +1,12 @@
+dovecot-antispam (1.1+20090218.git.g28075fa-2) unstable; urgency=low
+
+  * debian/gbp.conf: Removed no-create-orig line.
+  * Rebuilding with newer dovecot. (Closes: #521643)
+
+ -- Jonny Lamb <jonny@debian.org>  Wed, 08 Apr 2009 09:43:38 +0100
+
+dovecot-antispam (1.1+20090218.git.g28075fa-1) unstable; urgency=low
+
+  * Initial release.
+
+ -- Jonny Lamb <jonny@debian.org>  Wed, 04 Mar 2009 16:06:42 +0000
