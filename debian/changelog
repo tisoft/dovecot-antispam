@@ -1,3 +1,11 @@
+dovecot-antispam (1.2+20090702-0.1) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Import upstream fix af0f8f8de27901e2efb9560a1fc66c7af3cd810b, required to
+    build this with dovecot 1.2 now in unstable.  Closes: #537077
+
+ -- Ron Lee <ron@debian.org>  Fri, 17 Jul 2009 08:36:46 +0930
+
 dovecot-antispam (1.2-0.1) unstable; urgency=low
 
   * Non-maintainer upload.  (Pulling in new upstream source)
