@@ -1,5 +1,5 @@
 Source: dovecot-antispam
-Section: utils
+Section: mail
 Priority: optional
 Maintainer: Jonny Lamb <jonny@debian.org>
 Build-Depends: debhelper (>= 5), dovecot-dev
