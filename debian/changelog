@@ -1,3 +1,11 @@
+dovecot-antispam (1.2+20090702-0.2) unstable; urgency=low
+
+  * Include stdlib.h for the getenv prototype.  Closes: #537765
+  * Fix the match_fn_t prototype for dovecot 1.2 which makes more parameters
+    to it const.
+
+ -- Ron Lee <ron@debian.org>  Wed, 22 Jul 2009 23:14:52 +0930
+
 dovecot-antispam (1.2+20090702-0.1) unstable; urgency=low
 
   * Non-maintainer upload.
