@@ -8,6 +8,7 @@
 #include "dict.h"
 #include "imap-search.h"
 #include "dovecot-version.h"
+#include <stdlib.h>
 
 #define __stringify_1(x)	#x
 #define stringify(x)		__stringify_1(x)
