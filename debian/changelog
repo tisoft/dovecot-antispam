@@ -1,3 +1,10 @@
+dovecot-antispam (1.2+20090702-1) unstable; urgency=low
+
+  * Adopt this one officially now with the maintainer's blessing. Thanks Jonny!
+  * Update the Vcs-* URLs to point at the repo this was prepared from.
+
+ -- Ron Lee <ron@debian.org>  Sat, 25 Jul 2009 04:45:14 +0930
+
 dovecot-antispam (1.2+20090702-0.2) unstable; urgency=low
 
   * Include stdlib.h for the getenv prototype.  Closes: #537765
