@@ -5,7 +5,8 @@
 
 int main(int argc, char **argv)
 {
-	char *v = PACKAGE_STRING, *e;
+	const char *v = PACKAGE_STRING;
+	char *e;
 	int maj = 0, min = 0, patch = 0;
 
 	if (strncmp(v, "dovecot ", 8) && strncmp(v, "Dovecot ", 8))
