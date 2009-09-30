@@ -58,7 +58,8 @@ static int call_dspam(const char *signature, enum classification wanted)
 	 * non-zero exit code on errors so we treat it as an error
 	 * if it logged anything to stderr.
 	 */
-	pipe(pipes);
+	if (pipe(pipes) < 0)
+		return -1;
 
 	pid = fork();
 	if (pid < 0)
