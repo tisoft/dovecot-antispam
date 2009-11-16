@@ -2,7 +2,7 @@ Source: dovecot-antispam
 Section: mail
 Priority: optional
 Maintainer: Ron Lee <ron@debian.org>
-Build-Depends: debhelper (>= 5), dovecot-dev
+Build-Depends: debhelper (>= 5), dovecot-dev (>= 1:1.0), dovecot-dev (<< 1:1.3~)
 Standards-Version: 3.8.2.0
 Homepage: http://johannes.sipsolutions.net/Projects/dovecot-antispam
 Vcs-Git: git://git.debian.org/users/ron/dovecot-antispam.git
