@@ -10,7 +10,7 @@ Vcs-Browser: http://git.debian.org/?p=users/ron/dovecot-antispam.git;a=summary
 
 Package: dovecot-antispam
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, dovecot-imapd
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${dovecot:Depends}
 Description: a Dovecot plugin that helps train spam filters
  dovecot-antispam provides a plugin for the Dovecot IMAP server that
  helps train spam filters. It watches designated spam folders and

@@ -1,5 +1,13 @@
 #!/usr/bin/make -f
 
+EPOCH := 1:
+DOVECOT_VERSION := $(shell sh $(CURDIR)/debian/get-dovecot-version.sh)
+# if we were compiled against (for instance) dovecot 1.2.7, depend on versions
+# "1.2.7" <= v < "1.2.7.", so a hypothetical upstream point release 1.2.7.1
+# would not be considered suitable, and (more importantly) neither would 1.2.8.
+# (Dovecot has a very strict version-compat check: see Debian bug #456021)
+DOVECOT_DEPENDENCY := dovecot-imapd (>= $(EPOCH)$(DOVECOT_VERSION)), dovecot-imapd (<< $(EPOCH)$(DOVECOT_VERSION).)
+
 build: build-stamp
 
 build-stamp:
@@ -36,7 +44,7 @@ binary-arch: build install
 	dh_fixperms
 	dh_installdeb
 	dh_shlibdeps
-	dh_gencontrol
+	dh_gencontrol -- -Vdovecot:Depends="$(DOVECOT_DEPENDENCY)"
 	dh_md5sums
 	dh_builddeb
 
