@@ -1,3 +1,17 @@
+dovecot-antispam (1.2+20090702-1.1) UNRELEASED; urgency=low
+
+  * Local build (pseudo-NMU).
+  * Depend on the same upstream version of Dovecot we were compiled against,
+    since otherwise, the plugin will either not load or not work
+    (Closes: #544588; related to #456021 in dovecot).
+  * This package will now need a binary NMU for each new upstream version of
+    Dovecot. However, it already did, in reality - the new dependency just
+    makes this known to the packaging system.
+  * Build-Depend on Dovecot between 1.0 and 1.2, since this plugin doesn't
+    support earlier or later versions.
+
+ -- Simon McVittie <smcv@debian.org>  Mon, 16 Nov 2009 22:25:41 +0000
+
 dovecot-antispam (1.2+20090702-1) unstable; urgency=low
 
   * Adopt this one officially now with the maintainer's blessing. Thanks Jonny!
