@@ -1,3 +1,9 @@
+dovecot-antispam (1.2+20090702-1.2~ppa0~lucid0) lucid; urgency=low
+
+  * split into dovecot-antispam-{mailtrain,dspam}
+
+ -- Markus Heberling <markus@tisoft.de>  Sun, 02 May 2010 10:23:16 +0100
+
 dovecot-antispam (1.2+20090702-1.1) UNRELEASED; urgency=low
 
   * Local build (pseudo-NMU).

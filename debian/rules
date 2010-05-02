@@ -13,7 +13,7 @@ build: build-stamp
 build-stamp:
 	dh_testdir
 	cp debian/dovecot-antispam-config .config
-	$(MAKE)
+	#can't build here, is done in install 
 	touch $@
 
 clean:
@@ -28,7 +28,12 @@ install: build
 	dh_testdir
 	dh_testroot
 	dh_clean -k
-	dh_install lib90_antispam_plugin.so usr/lib/dovecot/modules/imap
+	dh_installdirs -A /usr/lib/dovecot/modules/imap
+
+	$(MAKE) CONFIG=defconfig BACKEND=dspam-exec INSTALLDIR=$(CURDIR)/debian/dovecot-antispam-dspam/usr/lib/dovecot/modules/imap install
+	$(MAKE) clean
+	$(MAKE) CONFIG=defconfig BACKEND=mailtrain INSTALLDIR=$(CURDIR)/debian/dovecot-antispam-mailtrain/usr/lib/dovecot/modules/imap install
+
 	ln -sf antispam.7 dovecot-antispam.7
 	dh_installman dovecot-antispam.7
 
